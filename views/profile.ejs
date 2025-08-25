@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title><%= user.fullname %> - Profile</title>
+  <link rel="stylesheet" href="/stylesheets/profile.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+  <!-- Profile Header -->
+  <div class="profile-header">
+    <div class="profile-avatar-container">
+      <img class="profile-avatar" src="<%= user.dp || '/images/default-dp.png' %>" alt="Profile Picture" />
+
+      <% if (currentUser && currentUser._id.toString() === user._id.toString()) { %>
+        <!-- DP Upload -->
+        <form action="/upload-dp" method="post" enctype="multipart/form-data" class="dp-form">
+          <input type="file" name="dp" id="dp" accept="image/*" required />
+          <label for="dp" class="custom-file-btn">Choose File</label>
+          <button type="submit" class="dp-submit-btn">Change DP</button>
+        </form>
+
+        <!-- DP Delete -->
+        <form action="/delete-dp" method="post" class="dp-delete-form">
+          <button type="submit" class="dp-delete-btn">Delete DP</button>
+        </form>
+        
+      <% } %>
+    </div>
+
+    <div class="profile-info">
+      <h1 class="profile-name"><%= user.fullname %></h1>
+      <p class="profile-handle">@<%= user.username %></p>
+      <div class="profile-stats">
+        <span class="profile-stat"><b><%= user.followers ? user.followers.length : 0 %></b> followers</span>
+        <span class="profile-stat"><b><%= user.following ? user.following.length : 0 %></b> following</span>
+      </div>
+      <p class="profile-bio">
+        <%= user.bio || "No bio yet." %>
+      </p>
+
+      <div class="profile-actions">
+        <% if (currentUser && currentUser._id.toString() === user._id.toString()) { %>
+          <a href="/share" class="profile-btn share-btn"><i class="fa-solid fa-arrow-up-from-bracket"></i> Share</a>
+          <a href="/edit-profile" class="profile-btn edit-btn"><i class="fa-solid fa-user-pen"></i> Edit profile</a>
+          <a href="/logout" class="profile-btn logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Log out</a>
+        <% } else { %>
+          <a href="/follow/<%= user._id %>" class="profile-btn follow-btn"><i class="fa-solid fa-user-plus"></i> Follow</a>
+<button onclick="window.location.href='/chat/<%= user._id %>'" class="chat-btn">Chat</button>
+
+
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <% if (currentUser && currentUser._id.toString() === user._id.toString()) { %>
+    <!-- Upload Section (only for self profile) -->
+    <div class="upload-section">
+      <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data" class="upload-form">
+        <div class="upload-cards">
+          <!-- Media Upload -->
+          <div class="upload-card">
+            <label for="fileInput" class="upload-label">
+              <div class="upload-icon"><i class="fa-regular fa-image"></i></div>
+              <span>Main Media (Image/Video)</span>
+            </label>
+            <input type="file" id="fileInput" name="file" accept="image/*,video/*" required />
+          </div>
+
+          <!-- Voice Note -->
+          <div class="voice-card upload-card">
+            <div class="voice-recorder">
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button id="recordBtn" type="button" class="rec-btn"><i class="fa-solid fa-microphone"></i></button>
+                <button id="stopBtn" type="button" class="stop-btn" disabled><i class="fa-solid fa-stop"></i></button>
+              </div>
+              <span class="voice-label">Optional Voice Note</span>
+              <audio id="audioPreview" controls style="display: none;"></audio>
+              <input type="file" id="voiceFile" name="voice" hidden />
+            </div>
+          </div>
+        </div>
+        <input type="text" id="captionInput" name="caption" placeholder="Write a caption..." required />
+        <button type="submit" class="upload-btn">Upload</button>
+      </form>
+    </div>
+  <% } %>
+
+  <!-- Navigation -->
+  <nav class="profile-nav">
+    <a href="#" class="nav-item active" id="createdTab">Created</a>
+    <a href="#" class="nav-item" id="savedTab">Saved</a>
+  </nav>
+
+  <!-- Created Posts -->
+  <main class="pin-grid" id="createdGrid">
+    <% if (user.posts && user.posts.length > 0) { %>
+      <% user.posts.forEach(post => { %>
+        <div class="pin-card">
+          <% if (post.fileType === "image") { %>
+            <img src="<%= post.fileUrl %>" alt="User upload" />
+          <% } else if (post.fileType === "video") { %>
+            <video controls>
+              <source src="<%= post.fileUrl %>" type="video/mp4" />
+            </video>
+          <% } %>
+
+          <% if (post.voiceUrl) { %>
+            <div class="audio-post">
+              <audio controls>
+                <source src="<%= post.voiceUrl %>" type="audio/webm" />
+              </audio>
+            </div>
+          <% } %>
+
+          <div class="pin-content">
+            <p class="pin-caption"><%= post.caption || "No caption" %></p>
+            <form action="/post/<%= post._id %>/save" method="POST">
+              <button type="submit" class="save-btn"><i class="fa-regular fa-bookmark"></i> Save</button>
+            </form>
+
+            <% if (currentUser && currentUser._id.toString() === user._id.toString()) { %>
+              <!-- Delete post only for self -->
+              <form action="/post/<%= post._id %>/delete" method="POST">
+                <button type="submit" class="delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>
+              </form>
+            <% } %>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="no-posts"><p>No posts yet.</p></div>
+    <% } %>
+  </main>
+
+  <!-- Saved Posts -->
+  <!-- Replace your entire Saved Posts block with this one -->
+
+<!-- Saved Posts (exact same card+grid structure as Created) -->
+<main class="pin-grid" id="savedGrid" style="display:none;">
+  <% if (user.savedPosts && user.savedPosts.length > 0) { %>
+    <% user.savedPosts.forEach(post => { %>
+      <div class="pin-card">
+        <% if (post.fileType === "image") { %>
+          <img src="<%= post.fileUrl %>" alt="Saved post" />
+        <% } else if (post.fileType === "video") { %>
+          <video controls>
+            <source src="<%= post.fileUrl %>" type="video/mp4" />
+          </video>
+        <% } %>
+
+        <% if (post.voiceUrl) { %>
+          <div class="audio-post">
+            <audio controls>
+              <source src="<%= post.voiceUrl %>" type="audio/webm" />
+            </audio>
+          </div>
+        <% } %>
+
+        <div class="pin-content">
+          <p class="pin-caption"><%= post.caption || "No caption" %></p>
+
+          <!-- Actions row: mirror Created section -->
+          <div style="display:flex; gap:8px; align-items:center;">
+            <!-- Unsave (so behavior mirrors Save in Created) -->
+            <form action="/post/<%= post._id %>/unsave" method="POST">
+              <button type="submit" class="save-btn">
+                <i class="fa-solid fa-bookmark"></i> Unsave
+              </button>
+            </form>
+
+            <% if (currentUser && currentUser._id.toString() === user._id.toString()) { %>
+              <!-- Optional: delete your own post even from Saved view (same as Created) -->
+              <form action="/post/<%= post._id %>/delete" method="POST">
+                <button type="submit" class="delete-btn">
+                  <i class="fa-solid fa-trash"></i> Delete
+                </button>
+              </form>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  <% } else { %>
+    <div class="no-posts"><p>No saved posts yet.</p></div>
+  <% } %>
+</main>
+
+<!-- Nothing to change in CSS: Saved uses the same .pin-grid, .pin-card, .pin-content, .pin-caption, .save-btn, .delete-btn classes as Created -->
+
+  <!-- Recorder Script -->
+  <script>
+    let mediaRecorder, audioChunks = [];
+    const recordBtn = document.getElementById("recordBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const audioPreview = document.getElementById("audioPreview");
+    const audioFileInput = document.getElementById("voiceFile");
+
+    if(recordBtn && stopBtn){
+      recordBtn.addEventListener("click", async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+          mediaRecorder.start();
+
+          recordBtn.disabled = true;
+          stopBtn.disabled = false;
+          audioPreview.style.display = "none";
+
+          mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) audioChunks.push(e.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            if (audioChunks.length === 0) return;
+            const blob = new Blob(audioChunks, { type: "audio/webm" });
+            const url = URL.createObjectURL(blob);
+            audioPreview.src = url;
+            audioPreview.style.display = "block";
+
+            const file = new File([blob], "voice-note.webm", { type: "audio/webm" });
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            audioFileInput.files = dt.files;
+          };
+        } catch (err) {
+          alert("Microphone access denied.");
+        }
+      });
+
+      stopBtn.addEventListener("click", () => {
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+          mediaRecorder.stop();
+        }
+        recordBtn.disabled = false;
+        stopBtn.disabled = true;
+      });
+    }
+  </script>
+
+  <!-- Toggle Script -->
+  <script>
+    const createdTab = document.getElementById("createdTab");
+    const savedTab = document.getElementById("savedTab");
+    const createdGrid = document.getElementById("createdGrid");
+    const savedGrid = document.getElementById("savedGrid");
+
+    createdTab.addEventListener("click", (e) => {
+      e.preventDefault();
+      createdTab.classList.add("active");
+      savedTab.classList.remove("active");
+      createdGrid.style.display = "grid";
+      savedGrid.style.display = "none";
+    });
+
+    savedTab.addEventListener("click", (e) => {
+      e.preventDefault();
+      savedTab.classList.add("active");
+      createdTab.classList.remove("active");
+      savedGrid.style.display = "grid";
+      createdGrid.style.display = "none";
+    });
+  </script>
+</body>
+</html>

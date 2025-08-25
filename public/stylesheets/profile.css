@@ -1,0 +1,412 @@
+/* =========================
+   Reset & Base
+========================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #f9f9f9;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #111;
+  line-height: 1.5;
+}
+
+/* =========================
+   Profile Header
+========================= */
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 0 18px 0;
+  background: white;
+  border-bottom: 1px solid #ddd;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.profile-avatar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #e60023;
+}
+
+.profile-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.profile-name {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.profile-handle {
+  color: #777;
+  margin-bottom: 8px;
+}
+
+.profile-stats {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.profile-stat {
+  font-size: 14px;
+  color: #444;
+}
+
+.profile-bio {
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #333;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.profile-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.25s ease, transform 0.2s ease;
+}
+
+.share-btn { background: #efefef; color: #111; }
+.edit-btn { background: #e60023; color: #fff; }
+.logout-btn { background: #ddd; color: #333; }
+
+.profile-btn:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+/* =========================
+   DP Forms
+========================= */
+.dp-form,
+.dp-delete-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.dp-submit-btn,
+.dp-delete-btn,
+.custom-file-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.25s ease, transform 0.2s ease;
+}
+
+.custom-file-btn { background: #efefef; color: #111; }
+.custom-file-btn:hover { background: #e0e0e0; transform: translateY(-2px); }
+
+.dp-submit-btn { background: #e60023; color: #fff; }
+.dp-submit-btn:hover { background: #c7001b; }
+
+.dp-delete-btn { background: #ffcccc; color: #990000; }
+.dp-delete-btn:hover { background: #ff9999; }
+
+/* =========================
+   Upload Section
+========================= */
+.upload-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 24px auto 0 auto;
+  width: 100%;
+}
+
+.upload-form {
+  background-color: #fff;
+  border-radius: 18px 18px 38px 18px;
+  box-shadow: 0 2px 24px rgba(220,40,75,0.15);
+  border-left: 6px solid #e60023;
+  border-top: 2px solid #eee;
+  border-bottom: 2px solid #eee;
+  padding: 18px 14px 20px 20px;
+  max-width: 340px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.upload-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.upload-card,
+.voice-card {
+  border-radius: 10px;
+  border: 2px dashed #ddd;
+  padding: 10px;
+  background: #fafafa;
+  transition: border-color 0.2s;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.upload-card:hover,
+.voice-card:hover {
+  border-color: #e60023;
+}
+
+.upload-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.upload-icon {
+  font-size: 32px;
+}
+
+.rec-btn,
+.stop-btn {
+  padding: 7px 12px;
+  font-size: 16px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: #e60023;
+  color: white;
+  transition: transform 0.2s ease, background 0.25s ease;
+}
+
+.rec-btn:hover { transform: scale(1.1); background: #c7001b; }
+.stop-btn { background: #444; }
+.stop-btn:hover { background: #111; }
+
+.voice-label { font-size: 13px; color: #666; }
+
+#captionInput {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.upload-btn {
+  width: 92%;
+  align-self: center;
+  margin-top: 8px;
+  border-radius: 30px;
+  background: #e60023;
+  color: white;
+  padding: 10px 0;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.25s ease, transform 0.2s ease;
+}
+
+.upload-btn:hover {
+  background: #c7001b;
+  transform: translateY(-2px);
+}
+
+/* =========================
+   Profile Navigation Tabs
+========================= */
+.profile-nav {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 12px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+}
+
+.nav-item {
+  font-size: 14px;
+  text-decoration: none;
+  color: #555;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: background 0.25s ease;
+  cursor: pointer;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background: #efefef;
+}
+
+/* =========================
+   Post Grid (Created + Saved)
+========================= */
+.pin-grid {
+  column-count: 4;
+  column-gap: 24px;
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto 48px;
+}
+
+@media (max-width: 1200px) { .pin-grid { column-count: 3; } }
+@media (max-width: 900px)  { .pin-grid { column-count: 2; } }
+@media (max-width: 600px)  { .pin-grid { column-count: 1; padding: 10px; } }
+
+.pin-card {
+  break-inside: avoid;
+  margin-bottom: 24px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: inline-block;
+  width: 100%;
+  position: relative;
+}
+
+.pin-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+}
+
+.pin-card img,
+.pin-card video {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  max-height: 360px;
+  border-bottom: 1px solid #eee;
+}
+
+.pin-content {
+  padding: 14px 16px;
+}
+
+.pin-caption {
+  font-size: 15px;
+  margin-bottom: 8px;
+  color: #333;
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+/* =========================
+   Audio Post
+========================= */
+.audio-post {
+  padding: 12px;
+  border-radius: 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffeaea 100%);
+}
+
+.audio-icon { font-size: 24px; color: #e60023; }
+.audio-post audio { width: 100%; max-width: 260px; }
+
+/* =========================
+   Options Menu
+========================= */
+.options-menu {
+  position: absolute;
+  top: 16px;
+  right: 15px;
+  z-index: 2;
+}
+
+.options-btn {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.18s;
+}
+
+.options-btn:hover { color: #e60023; }
+
+.options-dropdown {
+  display: none;
+  position: absolute;
+  top: 28px;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  min-width: 110px;
+}
+
+.options-dropdown a,
+.options-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 10px 15px;
+  font-size: 15px;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #444;
+  transition: background 0.19s;
+}
+
+.options-dropdown a:hover,
+.options-dropdown button:hover {
+  background: #f5f5f5;
+}
+
+.delete-btn {
+  color: #e60023 !important;
+  font-weight: 500;
+}
+
+/* =========================
+   Empty State
+========================= */
+.no-posts {
+  text-align: center;
+  padding: 48px;
+  font-size: 16px;
+  color: #777;
+}
+
+/* =========================
+   Responsive Adjustments
+========================= */
+@media (max-width: 600px) {
+  .profile-header { max-width: 96vw; padding: 16px 0; }
+  .upload-form { max-width: 98vw; }
+}

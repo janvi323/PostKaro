@@ -1,0 +1,111 @@
+/* Reset */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #fafafa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Chat Container */
+.chat-container {
+  width: 420px;
+  height: 600px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header */
+.chat-header {
+  background: #e60023;
+  color: white;
+  padding: 14px;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* Messages area */
+.chat-messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  background: #f8f8f8;
+  display: flex;
+  flex-direction: column;
+}
+
+.message {
+  padding: 10px 14px;
+  margin: 6px 0;
+  border-radius: 12px;
+  max-width: 70%;
+  word-wrap: break-word;
+  font-size: 14px;
+  position: relative;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.message p { margin: 0; }
+
+/* Sent by current user */
+.message.sent {
+  background: #dcf8c6;
+  align-self: flex-end;
+  text-align: right;
+}
+
+/* Received from other user */
+.message.received {
+  background: #ffffff;
+  border: 1px solid #ddd;
+  align-self: flex-start;
+  text-align: left;
+}
+
+/* Time small text */
+.message small {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #f84242ff;
+}
+
+/* Input Form */
+.chat-form {
+  display: flex;
+  border-top: 1px solid #ddd;
+}
+
+.chat-form input {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  outline: none;
+  font-size: 15px;
+}
+
+.chat-form button {
+  background: #e60023;
+  color: white;
+  border: none;
+  padding: 0 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s ease;
+}
+
+.chat-form button:hover {
+  background: #c6001d;
+}
+
+/* Scrollbar */
+.chat-messages::-webkit-scrollbar { width: 6px; }
+.chat-messages::-webkit-scrollbar-thumb { background: #bbb; border-radius: 4px; }
+.chat-messages::-webkit-scro
