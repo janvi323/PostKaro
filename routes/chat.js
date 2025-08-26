@@ -5,27 +5,18 @@ const User = require("../models/users");
 
 
 // Chat page between two users
-router.get("/:userId",  async (req, res) => {
+router.get("/:userId", async (req, res) => {
   try {
     const otherUser = await User.findById(req.params.userId);
     if (!otherUser) return res.redirect("/");
 
-    // Fetch messages between the two users
+    // Fetch conversation between two users
     const messages = await Message.find({
       $or: [
         { sender: req.user._id, receiver: otherUser._id },
         { sender: otherUser._id, receiver: req.user._id }
       ]
-    })
-      .populate("sender", "username fullname")
-      .populate("receiver", "username fullname")
-      .sort({ createdAt: 1 });
-
-    // Mark all received messages as "seen"
-    await Message.updateMany(
-      { receiver: req.user._id, sender: otherUser._id, seen: false },
-      { $set: { seen: true } }
-    );
+    }).sort({ createdAt: 1 });
 
     res.render("chat", { currentUser: req.user, otherUser, messages });
   } catch (err) {
@@ -34,12 +25,18 @@ router.get("/:userId",  async (req, res) => {
   }
 });
 
+
 // Send a message
 router.post("/:userId/send", async (req, res) => {
   try {
+    // Ensure receiver is the correct ObjectId
+    const receiverUser = await User.findById(req.params.userId);
+    if (!receiverUser) {
+      return res.redirect("/");
+    }
     const newMessage = new Message({
       sender: req.user._id,
-      receiver: req.params.userId,
+      receiver: receiverUser._id,
       text: req.body.text
     });
     await newMessage.save();
@@ -64,7 +61,7 @@ router.post("/:userId/delete",  async (req, res) => {
   } catch (err) {
     console.error(err);
     res.redirect("/feed");
-  }
+  } 
 });
 
 module.exports = router;

@@ -8,7 +8,7 @@ const expressSession = require('express-session');
 const flash = require("connect-flash");
 const MongoStore = require("connect-mongo");
 const http = require("http");
-
+const conversationsRoutes = require("./routes/conversations");
 // Routers
 const feedRouter = require('./routes/feed');
 var indexRouter = require('./routes/index');
@@ -63,7 +63,7 @@ app.use('/users', usersRouter); // ⚠️ make sure this is a router, not model
 app.use('/', postRouter);
 app.use('/', feedRouter);
 app.use('/chat', chatRoutes); // ✅ namespace chats
-
+app.use("/conversations", conversationsRoutes);
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chats</title>
+  <link rel="stylesheet" href="/stylesheets/chatlist.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <div class="navbar">
+    <a href="/feed" class="nav-icon"><i class="fa-solid fa-arrow-left"></i></a>
+    <h2 class="nav-title">Chats</h2>
+    <a href="/profile" class="nav-icon"><i class="fa-solid fa-user"></i></a>
+  </div>
+
+  <!-- Chats List -->
+  <div class="chat-list">
+    <% conversations.forEach(conv => { %>
+      <a class="chat-item" href="/chat/<%= conv.otherUser._id %>">
+        <div class="chat-avatar">
+          <img src="<%= conv.otherUser.avatar || '/images/default.png' %>" alt="avatar">
+        </div>
+        <div class="chat-info">
+          <h4><%= conv.otherUser.fullname %></h4>
+          <p><%= conv.lastMessage ? conv.lastMessage.text.slice(0, 30) : "No messages yet" %></p>
+        </div>
+        <span class="chat-time">
+          <% if (conv.lastMessage) { %>
+            <%= conv.lastMessage.createdAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) %>
+          <% } %>
+        </span>
+      </a>
+    <% }) %>
+  </div>
+
+</body>
+</html>
