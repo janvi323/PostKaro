@@ -16,9 +16,13 @@ function isLoggedIn(req, res, next) {
   res.redirect('/login');
 }
 
-// Dashboard
-router.get('/', (req, res) => {
-  res.send('dashboard');
+// Root route - redirect to feed if logged in, otherwise login
+router.get('/home', (req, res) => {
+  if (req.isAuthenticated()) {
+    res.redirect('/feed');
+  } else {
+    res.redirect('/login');
+  }
 });
 
 // Login page

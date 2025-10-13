@@ -9,17 +9,64 @@ function isLoggedIn(req, res, next) {
   res.redirect('/login');
 }
 
-// Feed Page
-router.get('/feed', isLoggedIn, async (req, res) => {
+// Feed Page - both root and /feed
+router.get('/', isLoggedIn, async (req, res) => {
   try {
+    const limit = 20; // Initial load limit
     const posts = await Post.find()
-      .populate("user", "username dp")
-      .sort({ createdAt: -1 });
+      .populate("user", "username fullname dp")
+      .sort({ createdAt: -1 })
+      .limit(limit);
 
-    res.render("feed", { posts });
+    res.render("feed", { posts, user: req.user });
   } catch (err) {
     console.error("Feed error:", err);
     res.status(500).send("Error loading feed");
+  }
+});
+
+// Feed Page
+router.get('/feed', isLoggedIn, async (req, res) => {
+  try {
+    const limit = 20; // Initial load limit
+    const posts = await Post.find()
+      .populate("user", "username fullname dp")
+      .sort({ createdAt: -1 })
+      .limit(limit);
+
+    res.render("feed", { posts, user: req.user });
+  } catch (err) {
+    console.error("Feed error:", err);
+    res.status(500).send("Error loading feed");
+  }
+});
+
+// Explore Page - Pinterest style discover
+router.get('/explore', isLoggedIn, async (req, res) => {
+  try {
+    const posts = await Post.find()
+      .populate("user", "username fullname dp")
+      .sort({ createdAt: -1 })
+      .limit(50); // Limit for better performance
+
+    res.render("explore", { posts, user: req.user });
+  } catch (err) {
+    console.error("Explore error:", err);
+    res.status(500).send("Error loading explore");
+  }
+});
+
+// Dashboard Page - User's own posts
+router.get('/dashboard', isLoggedIn, async (req, res) => {
+  try {
+    const posts = await Post.find({ user: req.user._id })
+      .populate("user", "username fullname dp")
+      .sort({ createdAt: -1 });
+
+    res.render("dashboard", { posts, user: req.user });
+  } catch (err) {
+    console.error("Dashboard error:", err);
+    res.status(500).send("Error loading dashboard");
   }
 });
 
@@ -67,7 +114,58 @@ res.json(users);
   }
 });
 
+// API endpoint for infinite scroll pagination
+router.get("/api/posts", isLoggedIn, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
 
+    const posts = await Post.find()
+      .populate("user", "username fullname dp")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalPosts = await Post.countDocuments();
+    const hasMore = skip + posts.length < totalPosts;
+
+    res.json({
+      posts,
+      hasMore,
+      currentPage: page,
+      totalPosts
+    });
+  } catch (err) {
+    console.error("Posts API error:", err);
+    res.status(500).json({ error: "Error loading posts" });
+  }
+});
+
+// Get notification counts
+router.get("/notification-counts", isLoggedIn, async (req, res) => {
+  try {
+    const Message = require('../models/Message');
+    
+    // Count unread messages (messages where current user is receiver and not seen)
+    const unreadMessages = await Message.countDocuments({
+      receiver: req.user._id,
+      seen: false
+    });
+
+    // For now, we'll simulate other notifications
+    // You can replace this with actual notification logic
+    const notifications = Math.floor(Math.random() * 5) + 1; // Random 1-5
+
+    res.json({
+      messages: unreadMessages,
+      notifications: notifications
+    });
+  } catch (err) {
+    console.error("Notification counts error:", err);
+    res.json({ messages: 0, notifications: 0 });
+  }
+});
 
 
 module.exports = router;

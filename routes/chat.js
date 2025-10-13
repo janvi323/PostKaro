@@ -7,21 +7,55 @@ const User = require("../models/users");
 // Chat page between two users
 router.get("/:userId", async (req, res) => {
   try {
-    const otherUser = await User.findById(req.params.userId);
-    if (!otherUser) return res.redirect("/");
+    const otherUser = await User.findById(req.params.userId).select("username fullname dp email");
+    if (!otherUser) return res.redirect("/conversations");
 
-    // Fetch conversation between two users
+    // Mark all messages from this user as seen
+    await Message.updateMany(
+      { 
+        sender: otherUser._id, 
+        receiver: req.user._id,
+        seen: false 
+      },
+      { seen: true }
+    );
+
+    // Fetch conversation between two users with populated user data
     const messages = await Message.find({
       $or: [
         { sender: req.user._id, receiver: otherUser._id },
         { sender: otherUser._id, receiver: req.user._id }
       ]
-    }).sort({ createdAt: 1 });
+    })
+    .sort({ createdAt: 1 })
+    .populate({
+      path: "sender",
+      select: "username fullname dp"
+    })
+    .populate({
+      path: "receiver", 
+      select: "username fullname dp"
+    });
 
-    res.render("chat", { currentUser: req.user, otherUser, messages });
+    // Ensure otherUser has default profile picture if none exists
+    if (!otherUser.dp) {
+      otherUser.dp = "/images/default-avatar.png";
+    }
+
+    res.render("chat", { 
+      currentUser: {
+        ...req.user._doc,
+        dp: req.user.dp || "/images/default-avatar.png"
+      }, 
+      otherUser: {
+        ...otherUser._doc,
+        dp: otherUser.dp || "/images/default-avatar.png"
+      }, 
+      messages 
+    });
   } catch (err) {
     console.error(err);
-    res.redirect("/");
+    res.redirect("/conversations");
   }
 });
 

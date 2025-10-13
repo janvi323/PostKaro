@@ -313,4 +313,142 @@ body {
   font-size: 14px;
 }
 
+/* =========================
+   Navbar Styles
+========================= */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-bottom: 1px solid #e1e1e1;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-logo a {
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: bold;
+  color: #e60023;
+}
+
+.navbar-logo i {
+  margin-right: 8px;
+}
+
+.navbar-types {
+  display: flex;
+  list-style: none;
+  gap: 20px;
+}
+
+.navbar-types li a {
+  text-decoration: none;
+  color: #111;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: background-color 0.2s;
+}
+
+.navbar-types li a:hover,
+.navbar-types li a.active {
+  background-color: #f1f1f1;
+}
+
+.navbar-search {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+  margin: 0 20px;
+}
+
+.navbar-search input {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 25px;
+  background-color: #f1f1f1;
+  font-size: 14px;
+  outline: none;
+}
+
+.navbar-actions {
+  display: flex;
+  list-style: none;
+  gap: 16px;
+}
+
+.navbar-icon-container {
+  position: relative;
+}
+
+.navbar-actions li a {
+  text-decoration: none;
+  color: #111;
+  font-size: 18px;
+  padding: 8px;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.navbar-actions li a:hover {
+  background-color: #f1f1f1;
+}
+
+/* Notification Badge Styles */
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ff3040; /* Instagram red */
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 2px solid white;
+  animation: pulse 2s infinite;
+}
+
+.message-badge {
+  background: #0095f6; /* Instagram blue for messages */
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Hide badge when count is 0 */
+.notification-badge.hidden {
+  display: none;
+}
+
 

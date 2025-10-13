@@ -12,7 +12,7 @@ const userSchema = new Schema({
   password: { type: String }, // handled by passport-local-mongoose
   fullname: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  dp: { type: String, default: "/images/default-avatar.png" },
+  dp: { type: String, default: "/images/default-avatar.svg" },
   savedPosts: [{ type: Schema.Types.ObjectId, ref: 'Post' }],  // profile picture
   posts: [{ type: Schema.Types.ObjectId, ref: 'Post' }]
 }, { timestamps: true });

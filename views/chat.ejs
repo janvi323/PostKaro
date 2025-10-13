@@ -4,25 +4,288 @@
   <meta charset="UTF-8">
   <title>Chat with <%= otherUser.fullname %></title>
   <link rel="stylesheet" href="/stylesheets/chat.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <script src="/socket.io/socket.io.js"></script>
+  <style>
+    :root {
+      --pinterest-red: #e60023;
+      --pinterest-black: #111;
+      --pinterest-grey: #767676;
+      --pinterest-light-grey: #f1f1f1;
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      background: white;
+      border-bottom: 1px solid #e1e1e1;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .back-btn {
+      margin-right: 16px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--pinterest-black);
+      text-decoration: none;
+      border-radius: 50%;
+      transition: background-color 0.2s;
+    }
+
+    .back-btn:hover {
+      background-color: var(--pinterest-light-grey);
+    }
+
+    .header-user-info {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+
+    .header-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      margin-right: 12px;
+      border: 2px solid #e1e1e1;
+    }
+
+    .header-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .header-user-details h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--pinterest-black);
+      margin: 0;
+    }
+
+    .header-user-details p {
+      font-size: 12px;
+      color: var(--pinterest-grey);
+      margin: 2px 0 0 0;
+    }
+
+    .message-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      overflow: hidden;
+      margin-right: 8px;
+      border: 1px solid #e1e1e1;
+    }
+
+    .message-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .message.received {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .message.sent .message-avatar {
+      margin-left: 8px;
+      margin-right: 0;
+    }
+
+    .message.sent {
+      display: flex;
+      align-items: flex-start;
+      flex-direction: row-reverse;
+      margin-bottom: 12px;
+    }
+
+    .message-content {
+      max-width: 70%;
+    }
+
+    .message-bubble {
+      padding: 12px 16px;
+      border-radius: 18px;
+      word-wrap: break-word;
+    }
+
+    .message.received .message-bubble {
+      background: var(--pinterest-light-grey);
+      color: var(--pinterest-black);
+      border-bottom-left-radius: 4px;
+    }
+
+    .message.sent .message-bubble {
+      background: var(--pinterest-red);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message-time {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+
+    .chat-actions {
+      display: flex;
+      gap: 12px;
+      margin-left: auto;
+    }
+
+    .action-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--pinterest-grey);
+      text-decoration: none;
+      border-radius: 50%;
+      transition: all 0.2s;
+      border: none;
+      background: none;
+      cursor: pointer;
+    }
+
+    .action-btn:hover {
+      background-color: var(--pinterest-light-grey);
+      color: var(--pinterest-black);
+    }
+
+    .typing-indicator {
+      display: none;
+      padding: 12px 20px;
+      color: var(--pinterest-grey);
+      font-style: italic;
+      font-size: 14px;
+    }
+
+    .typing-dots {
+      display: inline-block;
+      position: relative;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: var(--pinterest-grey);
+      animation: typing 1.4s infinite ease-in-out;
+    }
+
+    .typing-dots::before,
+    .typing-dots::after {
+      content: '';
+      display: inline-block;
+      position: absolute;
+      top: 0;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: var(--pinterest-grey);
+      animation: typing 1.4s infinite ease-in-out;
+    }
+
+    .typing-dots::before {
+      left: -8px;
+      animation-delay: -0.32s;
+    }
+
+    .typing-dots::after {
+      left: 8px;
+      animation-delay: 0.32s;
+    }
+
+    @keyframes typing {
+      0%, 80%, 100% {
+        transform: scale(0.8);
+        opacity: 0.5;
+      }
+      40% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="chat-container">
-    <!-- Chat Header -->
+    <!-- Chat Header with Profile Picture -->
     <div class="chat-header">
-      <h3><%= otherUser.fullname %></h3>
+      <a href="/conversations" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+      </a>
+      
+      <div class="header-user-info">
+        <div class="header-avatar">
+          <img src="<%= otherUser.dp || '/images/default-avatar.svg' %>" 
+               alt="<%= otherUser.fullname %>"
+               onerror="this.src='/images/default-avatar.svg'">
+        </div>
+        <div class="header-user-details">
+          <h3><%= otherUser.fullname || otherUser.username %></h3>
+          <p>@<%= otherUser.username %></p>
+        </div>
+      </div>
+
+      <div class="chat-actions">
+        <button class="action-btn" title="Video call">
+          <i class="fas fa-video"></i>
+        </button>
+        <button class="action-btn" title="Voice call">
+          <i class="fas fa-phone"></i>
+        </button>
+        <button class="action-btn" title="More options">
+          <i class="fas fa-ellipsis-v"></i>
+        </button>
+      </div>
     </div>
 
-    <!-- Messages -->
+    <!-- Messages with Profile Pictures -->
     <div id="messages" class="chat-messages">
       <% messages.forEach(msg => { %>
-        <div class="message <%= msg.sender.equals(currentUser._id) ? 'sent' : 'received' %>">
-          <p><%= msg.text %></p>
-          <small>
-            <%= msg.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %>
-          </small>
+        <div class="message <%= msg.sender && msg.sender._id && msg.sender._id.equals(currentUser._id) ? 'sent' : 'received' %>">
+          <div class="message-avatar">
+            <% if (msg.sender && msg.sender._id && msg.sender._id.equals(currentUser._id)) { %>
+              <img src="<%= currentUser.dp || '/images/default-avatar.png' %>" 
+                   alt="<%= currentUser.fullname %>"
+                   onerror="this.src='/images/default-avatar.png'">
+            <% } else { %>
+              <img src="<%= otherUser.dp || '/images/default-avatar.png' %>" 
+                   alt="<%= otherUser.fullname %>"
+                   onerror="this.src='/images/default-avatar.png'">
+            <% } %>
+          </div>
+          <div class="message-content">
+            <div class="message-bubble">
+              <p><%= msg.text %></p>
+            </div>
+            <div class="message-time">
+              <%= msg.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %>
+            </div>
+          </div>
         </div>
       <% }) %>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div id="typingIndicator" class="typing-indicator">
+      <div class="message-avatar">
+        <img src="<%= otherUser.dp || '/images/default-avatar.png' %>" 
+             alt="<%= otherUser.fullname %>"
+             onerror="this.src='/images/default-avatar.png'">
+      </div>
+      <span id="typingText"><%= otherUser.fullname %> is typing</span>
+      <span class="typing-dots"></span>
     </div>
 
     <!-- Input -->
@@ -38,9 +301,16 @@
   const form = document.getElementById("chatForm");
   const input = document.getElementById("msg");
   const messages = document.getElementById("messages");
+  const typingIndicator = document.getElementById("typingIndicator");
 
   const currentUserId = "<%= currentUser._id %>";
   const otherUserId = "<%= otherUser._id %>";
+  const currentUserName = "<%= currentUser.fullname || currentUser.username %>";
+  const currentUserAvatar = "<%= currentUser.dp || '/images/default-avatar.png' %>";
+  const otherUserAvatar = "<%= otherUser.dp || '/images/default-avatar.png' %>";
+
+  let typingTimer;
+  let isTyping = false;
 
   // 👉 Join the private room for this conversation
   socket.emit("joinChat", { senderId: currentUserId, receiverId: otherUserId });
@@ -52,20 +322,120 @@
       socket.emit("chatMessage", {
         senderId: currentUserId,
         receiverId: otherUserId,
-        text: input.value
+        text: input.value,
+        senderName: currentUserName,
+        senderAvatar: currentUserAvatar
       });
+      
+      // Add message to UI immediately for better UX
+      addMessageToUI({
+        senderId: currentUserId,
+        text: input.value,
+        senderAvatar: currentUserAvatar,
+        timestamp: new Date()
+      });
+      
       input.value = "";
+      
+      // Stop typing when message is sent
+      if (isTyping) {
+        socket.emit("stopTyping", { senderId: currentUserId, receiverId: otherUserId });
+        isTyping = false;
+      }
     }
+  });
+
+  // Typing indicator
+  input.addEventListener("input", function() {
+    if (!isTyping) {
+      socket.emit("typing", { 
+        senderId: currentUserId, 
+        receiverId: otherUserId,
+        senderName: currentUserName
+      });
+      isTyping = true;
+    }
+    
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(function() {
+      socket.emit("stopTyping", { senderId: currentUserId, receiverId: otherUserId });
+      isTyping = false;
+    }, 1000);
   });
 
   // Receive message
   socket.on("chatMessage", function(msg) {
-    const div = document.createElement("div");
-    div.classList.add("message");
-    div.classList.add(msg.senderId === currentUserId ? "sent" : "received");
-    div.innerHTML = `<p>${msg.text}</p>`;
-    messages.appendChild(div);
+    // Only add if it's from the other user (we already added our own messages)
+    if (msg.senderId !== currentUserId) {
+      addMessageToUI(msg);
+    }
+  });
+
+  // Typing indicators
+  socket.on("typing", function(data) {
+    if (data.senderId !== currentUserId) {
+      typingIndicator.style.display = "flex";
+      messages.scrollTop = messages.scrollHeight;
+    }
+  });
+
+  socket.on("stopTyping", function(data) {
+    if (data.senderId !== currentUserId) {
+      typingIndicator.style.display = "none";
+    }
+  });
+
+  function addMessageToUI(msg) {
+    const messageDiv = document.createElement("div");
+    messageDiv.classList.add("message");
+    messageDiv.classList.add(msg.senderId === currentUserId ? "sent" : "received");
+    
+    const avatar = msg.senderId === currentUserId ? currentUserAvatar : otherUserAvatar;
+    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    messageDiv.innerHTML = `
+      <div class="message-avatar">
+        <img src="${avatar}" alt="User Avatar" onerror="this.src='/images/default-avatar.png'">
+      </div>
+      <div class="message-content">
+        <div class="message-bubble">
+          <p>${msg.text}</p>
+        </div>
+        <div class="message-time">
+          ${time}
+        </div>
+      </div>
+    `;
+    
+    messages.appendChild(messageDiv);
     messages.scrollTop = messages.scrollHeight;
+  }
+
+  // Auto-scroll to bottom on page load
+  window.addEventListener('load', function() {
+    messages.scrollTop = messages.scrollHeight;
+  });
+
+  // Handle action button clicks
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.action-btn')) {
+      const btn = e.target.closest('.action-btn');
+      const title = btn.getAttribute('title');
+      
+      // Add haptic feedback
+      btn.style.transform = 'scale(0.9)';
+      setTimeout(() => btn.style.transform = 'scale(1)', 100);
+      
+      // Handle different actions
+      if (title === 'Video call') {
+        alert('Video call feature coming soon!');
+      } else if (title === 'Voice call') {
+        alert('Voice call feature coming soon!');
+      } else if (title === 'More options') {
+        // Could open a dropdown menu
+        alert('More options coming soon!');
+      }
+    }
   });
 </script>
 

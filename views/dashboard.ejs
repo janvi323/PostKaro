@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Your Pins | Pinterest</title>
+    <link rel="stylesheet" href="/stylesheets/explore.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .dashboard-header {
+            text-align: center;
+            padding: 48px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-bottom: 32px;
+        }
+        
+        .dashboard-header h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .dashboard-stats {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-top: 24px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .create-pin-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--pinterest-red);
+            color: white;
+            border: none;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(230, 0, 35, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .create-pin-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(230, 0, 35, 0.6);
+        }
+        
+        .filter-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 32px;
+            padding: 0 16px;
+        }
+        
+        .filter-tab {
+            padding: 12px 24px;
+            border: 2px solid #e1e1e1;
+            border-radius: 24px;
+            background: white;
+            color: var(--pinterest-black);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-tab.active,
+        .filter-tab:hover {
+            border-color: var(--pinterest-red);
+            background: var(--pinterest-red);
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+            color: var(--pinterest-grey);
+        }
+        
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 24px;
+            color: var(--pinterest-light-grey);
+        }
+        
+        .empty-state h3 {
+            font-size: 24px;
+            margin-bottom: 16px;
+            color: var(--pinterest-black);
+        }
+        
+        .empty-state p {
+            font-size: 16px;
+            max-width: 400px;
+            margin: 0 auto 24px;
+        }
+        
+        .create-first-pin-btn {
+            background: var(--pinterest-red);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .create-first-pin-btn:hover {
+            background: var(--pinterest-dark-red);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-logo">
+            <a href="/feed"><i class="fab fa-pinterest"></i>Pinterest</a>
+        </div>
+        
+        <ul class="navbar-types">
+            <li><a href="/feed" class="nav-link">Home</a></li>
+            <li><a href="/explore" class="nav-link">Explore</a></li>
+            <li><a href="/dashboard" class="nav-link active">Dashboard</a></li>
+        </ul>
+        
+        <div class="navbar-search">
+            <input type="text" id="searchInput" placeholder="Search for pins, users...">
+            <div class="search-results" id="searchResults">
+                <!-- Search results will be populated here -->
+            </div>
+        </div>
+        
+        <ul class="navbar-actions">
+            <li class="navbar-icon-container">
+                <a href="/notifications" class="nav-link">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" id="notificationBadge">0</span>
+                </a>
+            </li>
+            <li class="navbar-icon-container">
+                <a href="/conversations" class="nav-link">
+                    <i class="fas fa-comment"></i>
+                    <span class="notification-badge message-badge" id="messageBadge">0</span>
+                </a>
+            </li>
+            <li><a href="/profile/<%= user._id %>" class="nav-link"><i class="fas fa-user"></i></a></li>
+            <li><a href="/logout" class="nav-link"><i class="fas fa-sign-out-alt"></i></a></li>
+        </ul>
+    </nav>
+
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <h1>Your Creative Dashboard</h1>
+        <p>Manage and showcase your amazing pins</p>
+        
+        <div class="dashboard-stats">
+            <div class="stat-item">
+                <span class="stat-number" id="totalPins"><%= posts.length %></span>
+                <span class="stat-label">Pins</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="totalViews">
+                    <%= posts.reduce((sum, post) => sum + (post.views || 0), 0) %>
+                </span>
+                <span class="stat-label">Views</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="totalLikes">
+                    <%= posts.reduce((sum, post) => sum + (post.likes ? post.likes.length : 0), 0) %>
+                </span>
+                <span class="stat-label">Likes</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+        <a href="#" class="filter-tab active" data-filter="all">All Pins</a>
+        <a href="#" class="filter-tab" data-filter="images">Images</a>
+        <a href="#" class="filter-tab" data-filter="videos">Videos</a>
+        <a href="#" class="filter-tab" data-filter="audio">Audio</a>
+    </div>
+
+    <!-- Pinterest Masonry Layout -->
+    <% if (posts && posts.length > 0) { %>
+        <div class="pinterest-container" id="pinterestContainer">
+            <% posts.forEach(function(post) { %>
+                <div class="pin-card" data-type="<%= post.fileType === 'image' ? 'images' : 'videos' %>">
+                    <div class="pin-media">
+                        <% if (post.fileType === "image") { %>
+                            <img src="<%= post.fileUrl %>" alt="<%= post.caption || 'Pin image' %>">
+                        <% } else if (post.fileType === "video") { %>
+                            <video controls>
+                                <source src="<%= post.fileUrl %>" type="video/webm">
+                                Your browser does not support the video tag.
+                            </video>
+                        <% } else { %>
+                            <div class="audio-pin">
+                                <i class="fas fa-music"></i>
+                                <p>Media Pin</p>
+                            </div>
+                        <% } %>
+                        
+                        <div class="pin-overlay">
+                            <div class="pin-user">
+                                <a href="/profile/<%= user._id %>" class="user-link">
+                                    <img src="<%= user.dp || '/images/default-avatar.png' %>" alt="<%= user.username %>">
+                                    <span><%= user.username %></span>
+                                </a>
+                            </div>
+                            <div class="pin-actions">
+                                <button class="save-btn">Edit</button>
+                                <button class="share-btn" title="Share"><i class="fas fa-share"></i></button>
+                                <button class="more-btn" title="More options"><i class="fas fa-ellipsis-h"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pin-info">
+                        <h3 class="pin-title"><%= post.caption || 'Untitled Pin' %></h3>
+                        <div class="pin-meta">
+                            <img src="<%= user.dp || '/images/default-avatar.svg' %>" alt="<%= user.username %>">
+                            <span><%= user.username %></span>
+                            <span>•</span>
+                            <span><%= Math.floor((Date.now() - new Date(post.createdAt).getTime()) / (1000 * 60 * 60 * 24)) %>d ago</span>
+                        </div>
+                        
+                        <% if (post.caption && post.caption.length > 50) { %>
+                            <p style="margin-top: 8px; color: var(--pinterest-grey); font-size: 14px; line-height: 1.4;">
+                                <%= post.caption.slice(0, 100) %>...
+                            </p>
+                        <% } %>
+                    </div>
+                    
+                    <% if (post.voiceUrl) { %>
+                        <div class="voice-note">
+                            <i class="fas fa-microphone"></i>
+                            <audio controls>
+                                <source src="<%= post.voiceUrl %>" type="audio/webm">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                    <% } %>
+                </div>
+            <% }); %>
+        </div>
+    <% } else { %>
+        <div class="empty-state">
+            <i class="fas fa-pin"></i>
+            <h3>No pins yet</h3>
+            <p>Start creating amazing pins to showcase your creativity. Your pins will appear here once you create them.</p>
+            <button class="create-first-pin-btn" onclick="window.location.href='/feed'">
+                <i class="fas fa-plus"></i> Create Your First Pin
+            </button>
+        </div>
+    <% } %>
+
+    <!-- Floating Create Button -->
+    <button class="create-pin-btn" onclick="window.location.href='/feed'" title="Create new pin">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <script>
+        // Initialize Pinterest-style masonry layout
+        function initMasonry() {
+            const container = document.getElementById('pinterestContainer');
+            if (!container) return;
+            
+            const cards = container.querySelectorAll('.pin-card');
+            const columns = Math.floor(container.offsetWidth / 252); // 236px + 16px gap
+            const columnHeights = new Array(columns).fill(0);
+            
+            cards.forEach(card => {
+                const shortestColumn = columnHeights.indexOf(Math.min(...columnHeights));
+                card.style.position = 'absolute';
+                card.style.left = `${shortestColumn * 252}px`;
+                card.style.top = `${columnHeights[shortestColumn]}px`;
+                columnHeights[shortestColumn] += card.offsetHeight + 16;
+            });
+            
+            container.style.height = `${Math.max(...columnHeights)}px`;
+            container.style.position = 'relative';
+        }
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            if (query.length > 0) {
+                // Simulate search results
+                searchResults.innerHTML = `
+                    <div class="search-item">
+                        <img src="/images/default-avatar.png" alt="User">
+                        <span>Search for "${query}"</span>
+                    </div>
+                `;
+                searchResults.style.display = 'block';
+            } else {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        // Hide search results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        // Filter functionality
+        const filterTabs = document.querySelectorAll('.filter-tab');
+        const pinCards = document.querySelectorAll('.pin-card');
+
+        filterTabs.forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Update active tab
+                filterTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                const filter = this.dataset.filter;
+                
+                // Filter pins
+                pinCards.forEach(card => {
+                    const cardType = card.dataset.type;
+                    if (filter === 'all' || cardType === filter) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                // Reinitialize masonry after filtering
+                setTimeout(initMasonry, 100);
+            });
+        });
+
+        // Load notification counts
+        async function loadNotificationCounts() {
+            try {
+                const response = await fetch('/notification-counts');
+                const data = await response.json();
+                
+                const notificationBadge = document.getElementById('notificationBadge');
+                const messageBadge = document.getElementById('messageBadge');
+                
+                if (data.notifications > 0) {
+                    notificationBadge.textContent = data.notifications > 99 ? '99+' : data.notifications;
+                    notificationBadge.classList.remove('hidden');
+                } else {
+                    notificationBadge.classList.add('hidden');
+                }
+                
+                if (data.messages > 0) {
+                    messageBadge.textContent = data.messages > 99 ? '99+' : data.messages;
+                    messageBadge.classList.remove('hidden');
+                } else {
+                    messageBadge.classList.add('hidden');
+                }
+            } catch (error) {
+                console.log('Could not load notification counts');
+            }
+        }
+
+        // Pin interaction handlers
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('save-btn')) {
+                e.preventDefault();
+                // Handle edit pin action
+                console.log('Edit pin clicked');
+            }
+            
+            if (e.target.closest('.share-btn')) {
+                e.preventDefault();
+                // Handle share action
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'Check out this pin!',
+                        url: window.location.href
+                    });
+                } else {
+                    // Fallback for browsers without Web Share API
+                    navigator.clipboard.writeText(window.location.href);
+                    alert('Link copied to clipboard!');
+                }
+            }
+        });
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotificationCounts();
+            setTimeout(initMasonry, 100);
+            
+            // Refresh notification counts every 30 seconds
+            setInterval(loadNotificationCounts, 30000);
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            setTimeout(initMasonry, 100);
+        });
+
+        // Add pulsing animation to notification badges
+        setInterval(() => {
+            const badges = document.querySelectorAll('.notification-badge:not(.hidden)');
+            badges.forEach(badge => {
+                badge.style.animation = 'pulse 1s ease-in-out';
+                setTimeout(() => badge.style.animation = '', 1000);
+            });
+        }, 5000);
+    </script>
+
+    <style>
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explore - PostKaro</title>
+  <link rel="stylesheet" href="/stylesheets/explore.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <!-- Pinterest-style Navbar -->
+  <nav class="navbar">
+    <div class="navbar-logo">
+      <a href="/"><i class="fab fa-pinterest"></i> PostKaro</a>
+    </div>
+   
+    <ul class="navbar-types">
+      <li><a href="/feed">Home</a></li>
+      <li><a href="/explore" class="active">Explore</a></li>
+      <li><a href="/dashboard">Your Posts</a></li>
+    </ul>
+
+    <div class="navbar-search">
+      <input type="text" id="searchInput" placeholder="Search amazing content..." autocomplete="off" />
+      <div id="searchResults" class="search-results"></div>
+    </div>
+
+    <ul class="navbar-actions">
+      <li class="navbar-icon-container">
+        <a href="/notifications">
+          <i class="fas fa-bell"></i>
+          <span class="notification-badge" id="notificationBadge">3+</span>
+        </a>
+      </li>
+      <li class="navbar-icon-container">
+        <a href="/profile">
+          <i class="fas fa-user"></i>
+        </a>
+      </li>
+      <li class="navbar-icon-container">
+        <a href="/logout">
+          <i class="fas fa-sign-out-alt"></i>
+        </a>
+      </li>
+      <li class="navbar-icon-container">
+        <a href="/conversations">
+          <i class="fas fa-envelope"></i>
+          <span class="notification-badge message-badge" id="messageBadge">2+</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <h1>Discover Amazing Ideas</h1>
+    <p>Explore trending content and get inspired</p>
+  </div>
+
+  <!-- Pinterest Masonry Layout -->
+  <div class="pinterest-container">
+    <% // Break posts into 4 columns for Pinterest-style layout %>
+    <% for (let col = 0; col < 4; col++) { %>
+      <div class="pinterest-column">
+        <% posts.filter((p, i) => i % 4 === col).forEach(post => { %>
+          <div class="pin-card">
+            
+            <!-- Image/Video/Audio Wrapper -->
+            <div class="pin-media">
+              <!-- Overlay on hover -->
+              <div class="pin-overlay">
+                <div class="pin-actions">
+                  <!-- Save button -->
+                  <form action="/post/<%= post._id %>/save" method="POST" style="display:inline;">
+                    <button type="submit" class="save-btn">
+                      <i class="fas fa-bookmark"></i> Save
+                    </button>
+                  </form>
+                  
+                  <!-- Share button -->
+                  <button class="share-btn" onclick="sharePin('<%= post._id %>')">
+                    <i class="fas fa-share"></i>
+                  </button>
+                  
+                  <!-- More options -->
+                  <button class="more-btn">
+                    <i class="fas fa-ellipsis-h"></i>
+                  </button>
+                </div>
+                
+                <!-- User info on hover -->
+                <div class="pin-user">
+                  <a href="/profile/<%= post.user?._id %>" class="user-link">
+                    <img src="<%= post.user?.dp || '/images/default-dp.png' %>" alt="<%= post.user?.username %>">
+                    <span><%= post.user?.username || "Unknown" %></span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Media rendering -->
+              <% if (post.fileType === "image") { %>
+                <img src="<%= post.fileUrl %>" alt="<%= post.caption %>" loading="lazy">
+              <% } else if (post.fileType === "video") { %>
+                <video src="<%= post.fileUrl %>" controls></video>
+              <% } else if (post.fileType === "audio") { %>
+                <div class="audio-pin">
+                  <i class="fas fa-music"></i>
+                  <audio src="<%= post.fileUrl %>" controls></audio>
+                </div>
+              <% } %>
+            </div>
+
+            <!-- Pin Info -->
+            <div class="pin-info">
+              <h3 class="pin-title"><%= post.caption || 'Untitled' %></h3>
+              <div class="pin-meta">
+                <img src="<%= post.user?.dp || '/images/default-dp.png' %>" alt="<%= post.user?.username %>">
+                <span><%= post.user?.username || "Unknown" %></span>
+              </div>
+            </div>
+
+            <!-- Optional voice note -->
+            <% if (post.voiceUrl) { %>
+              <div class="voice-note">
+                <i class="fas fa-microphone"></i>
+                <audio src="<%= post.voiceUrl %>" controls></audio>
+              </div>
+            <% } %>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Loading indicator -->
+  <div class="loading-indicator" id="loadingIndicator">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Loading more amazing content...</p>
+  </div>
+
+  <script>
+    // Search functionality
+    const searchInput = document.getElementById("searchInput");
+    const searchResults = document.getElementById("searchResults");
+
+    let searchTimeout;
+
+    searchInput.addEventListener("input", async (e) => {
+      const query = e.target.value.trim();
+      clearTimeout(searchTimeout);
+
+      if (query.length === 0) {
+        searchResults.innerHTML = "";
+        searchResults.style.display = "none";
+        return;
+      }
+
+      searchTimeout = setTimeout(async () => {
+        try {
+          const res = await fetch(`/search-users?q=${encodeURIComponent(query)}`);
+          const users = await res.json();
+
+          if (users.length === 0) {
+            searchResults.innerHTML = "<p class='no-result'>No users found</p>";
+          } else {
+            searchResults.innerHTML = users.map(user => `
+              <div class="search-item" onclick="window.location.href='/profile/${user._id}'">
+                <img src="${user.dp || '/images/default-dp.png'}" alt="Profile Picture" />
+                <div>
+                  <strong>${user.fullname}</strong>
+                  <p>@${user.username}</p>
+                </div>
+              </div>
+            `).join("");
+          }
+          searchResults.style.display = "block";
+        } catch (error) {
+          console.error("Search error:", error);
+          searchResults.innerHTML = "<p class='no-result'>Search error</p>";
+          searchResults.style.display = "block";
+        }
+      }, 300);
+    });
+
+    // Hide search results when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+        searchResults.style.display = "none";
+      }
+    });
+
+    // Share function
+    function sharePin(postId) {
+      if (navigator.share) {
+        navigator.share({
+          title: 'Check out this amazing post!',
+          url: window.location.origin + '/post/' + postId
+        });
+      } else {
+        // Fallback
+        navigator.clipboard.writeText(window.location.origin + '/post/' + postId);
+        alert('Link copied to clipboard!');
+      }
+    }
+
+    // Notification Counts Function
+    async function updateNotificationCounts() {
+      try {
+        const response = await fetch('/notification-counts');
+        const data = await response.json();
+        
+        const notificationBadge = document.getElementById('notificationBadge');
+        const messageBadge = document.getElementById('messageBadge');
+        
+        if (data.notifications > 0) {
+          notificationBadge.textContent = data.notifications > 9 ? '9+' : data.notifications.toString();
+          notificationBadge.classList.remove('hidden');
+        } else {
+          notificationBadge.classList.add('hidden');
+        }
+        
+        if (data.messages > 0) {
+          messageBadge.textContent = data.messages > 9 ? '9+' : data.messages.toString();
+          messageBadge.classList.remove('hidden');
+        } else {
+          messageBadge.classList.add('hidden');
+        }
+        
+      } catch (error) {
+        console.error('Error fetching notification counts:', error);
+      }
+    }
+
+    updateNotificationCounts();
+    setInterval(updateNotificationCounts, 30000);
+  </script>
+</body>
+</html>

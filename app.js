@@ -17,12 +17,9 @@ var postRouter = require('./routes/postOperations');
 const chatRoutes = require("./routes/chat");
 
 // Socket controller
-const { Server } = require("socket.io");
 const socketController = require("./controllers/socket");
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server); // ✅ Correct way
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -58,10 +55,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(flash());
 
 // Routes
-app.use('/', indexRouter);
+app.use('/', feedRouter); // Feed routes first (handles /, /feed, /explore, /dashboard)
+app.use('/', indexRouter); // Auth routes (/login, /register, etc.)
 app.use('/users', usersRouter); // ⚠️ make sure this is a router, not model
 app.use('/', postRouter);
-app.use('/', feedRouter);
 app.use('/chat', chatRoutes); // ✅ namespace chats
 app.use("/conversations", conversationsRoutes);
 // catch 404 and forward to error handler
@@ -77,13 +74,7 @@ app.use(function (err, req, res, next) {
   res.render('error');
 });
 
-// ✅ Initialize Socket.IO
-socketController(io);
-
-// Start server
-const PORT = process.env.PORT || 4000;
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+// ✅ Socket.io will be initialized in bin/www
+app.set('socketController', socketController);
 
 module.exports = app;

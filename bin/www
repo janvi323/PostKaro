@@ -7,6 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('pinterest:server');
 var http = require('http');
+const { Server } = require("socket.io");
 
 /**
  * Get port from environment and store in Express.
@@ -20,6 +21,16 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
+
+/**
+ * Create Socket.IO server
+ */
+
+const io = new Server(server);
+const socketController = app.get('socketController');
+if (socketController) {
+  socketController(io);
+}
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -86,5 +97,6 @@ function onListening() {
   var bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port;
+  console.log(`🚀 Server running on http://localhost:${addr.port}`);
   debug('Listening on ' + bind);
 }

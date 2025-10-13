@@ -17,9 +17,6 @@ const postSchema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Post', postSchema);
-
-
 // ✅ Middleware to auto-remove post reference from user
 postSchema.post("findOneAndDelete", async function (doc) {
   if (doc) {
