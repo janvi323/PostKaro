@@ -7,8 +7,27 @@ const User = require("../models/users");
 // Chat page between two users
 router.get("/:userId", async (req, res) => {
   try {
-    const otherUser = await User.findById(req.params.userId).select("username fullname dp email");
+    const otherUser = await User.findById(req.params.userId).select("username fullname dp email isPrivate");
     if (!otherUser) return res.redirect("/conversations");
+
+    // Check messaging permissions
+    const currentUser = await User.findById(req.user._id);
+    let canMessage = false;
+    
+    if (currentUser.following.includes(otherUser._id)) {
+      // Can message if following
+      canMessage = true;
+    } else if (!otherUser.isPrivate) {
+      // Can message public accounts without following
+      canMessage = true;
+    }
+    
+    if (!canMessage) {
+      req.flash('error', otherUser.isPrivate 
+        ? 'You must follow this private account to send them messages' 
+        : 'You must follow this user to send them messages');
+      return res.redirect("/conversations");
+    }
 
     // Mark all messages from this user as seen
     await Message.updateMany(
@@ -64,10 +83,30 @@ router.get("/:userId", async (req, res) => {
 router.post("/:userId/send", async (req, res) => {
   try {
     // Ensure receiver is the correct ObjectId
-    const receiverUser = await User.findById(req.params.userId);
+    const receiverUser = await User.findById(req.params.userId).select("isPrivate");
     if (!receiverUser) {
       return res.redirect("/");
     }
+
+    // Check messaging permissions
+    const currentUser = await User.findById(req.user._id);
+    let canMessage = false;
+    
+    if (currentUser.following.includes(receiverUser._id)) {
+      // Can message if following
+      canMessage = true;
+    } else if (!receiverUser.isPrivate) {
+      // Can message public accounts without following
+      canMessage = true;
+    }
+    
+    if (!canMessage) {
+      req.flash('error', receiverUser.isPrivate 
+        ? 'You must follow this private account to send them messages' 
+        : 'You must follow this user to send them messages');
+      return res.redirect("/conversations");
+    }
+
     const newMessage = new Message({
       sender: req.user._id,
       receiver: receiverUser._id,

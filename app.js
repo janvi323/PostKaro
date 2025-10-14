@@ -9,12 +9,14 @@ const flash = require("connect-flash");
 const MongoStore = require("connect-mongo");
 const http = require("http");
 const conversationsRoutes = require("./routes/conversations");
+const notificationsRouter = require('./routes/notifications');
 // Routers
 const feedRouter = require('./routes/feed');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./models/users');  // ⚠️ this looks wrong, should be routes/users.js
 var postRouter = require('./routes/postOperations');
 const chatRoutes = require("./routes/chat");
+const followRouter = require('./routes/follow');
 
 // Socket controller
 const socketController = require("./controllers/socket");
@@ -54,6 +56,23 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(flash());
 
+// Global user middleware for navbar notifications
+app.use(async (req, res, next) => {
+  res.locals.user = req.user;
+  if (req.user) {
+    try {
+      const User = require('./models/users');
+      const userData = await User.findById(req.user._id).select('followRequests');
+      if (userData) {
+        res.locals.user.followRequests = userData.followRequests || [];
+      }
+    } catch (error) {
+      console.error('Error fetching user data for navbar:', error);
+    }
+  }
+  next();
+});
+
 // Routes
 app.use('/', feedRouter); // Feed routes first (handles /, /feed, /explore, /dashboard)
 app.use('/', indexRouter); // Auth routes (/login, /register, etc.)
@@ -61,6 +80,8 @@ app.use('/users', usersRouter); // ⚠️ make sure this is a router, not model
 app.use('/', postRouter);
 app.use('/chat', chatRoutes); // ✅ namespace chats
 app.use("/conversations", conversationsRoutes);
+app.use('/follow', followRouter); // Follow system routes
+app.use('/notifications', notificationsRouter); // Notifications routes
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));

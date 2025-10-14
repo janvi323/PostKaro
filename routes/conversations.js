@@ -12,17 +12,20 @@ function isLoggedIn(req, res, next) {
 // Show all conversations for current user
 router.get("/", isLoggedIn, async (req, res) => {
   try {
+    // Get current user with following list
+    const currentUser = await User.findById(req.user._id);
+    
     const messages = await Message.find({
       $or: [{ sender: req.user._id }, { receiver: req.user._id }]
     })
       .sort({ createdAt: -1 })
       .populate({
         path: "sender",
-        select: "username fullname dp email"
+        select: "username fullname dp email isPrivate"
       })
       .populate({
         path: "receiver", 
-        select: "username fullname dp email"
+        select: "username fullname dp email isPrivate"
       });
 
     let conversations = [];
@@ -30,6 +33,16 @@ router.get("/", isLoggedIn, async (req, res) => {
 
     for (let msg of messages) {
       const otherUser = msg.sender._id.equals(req.user._id) ? msg.receiver : msg.sender;
+
+      // Show conversations with:
+      // 1. Users you follow
+      // 2. Public accounts (even if not following)
+      // 3. Private accounts only if following
+      const canShowConversation = currentUser.following.includes(otherUser._id) || !otherUser.isPrivate;
+      
+      if (!canShowConversation) {
+        continue;
+      }
 
       if (!seenUsers.has(otherUser._id.toString())) {
         // Count unread messages from this specific user
@@ -81,10 +94,21 @@ router.get("/search-users", isLoggedIn, async (req, res) => {
     if (!query) {
       return res.json([]);
     }
+
+    // Get current user with following list
+    const currentUser = await User.findById(req.user._id);
     
     const users = await User.find({
       $and: [
         { _id: { $ne: req.user._id } }, // Exclude current user
+        {
+          $or: [
+            // Users you follow
+            { _id: { $in: currentUser.following } },
+            // Public accounts (even if not following)
+            { isPrivate: { $ne: true } }
+          ]
+        },
         {
           $or: [
             { username: { $regex: query, $options: 'i' } },
@@ -94,7 +118,7 @@ router.get("/search-users", isLoggedIn, async (req, res) => {
         }
       ]
     })
-    .select('username fullname dp email')
+    .select('username fullname dp email isPrivate')
     .limit(10);
     
     res.json(users);

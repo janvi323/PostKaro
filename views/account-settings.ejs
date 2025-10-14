@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - PostKaro</title>
+    <link rel="stylesheet" href="/stylesheets/profile.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .settings-container {
+            max-width: 600px;
+            margin: 80px auto 0;
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .settings-header {
+            text-align: center;
+            margin-bottom: 32px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e1e1e1;
+        }
+
+        .settings-header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: #111;
+        }
+
+        .settings-section {
+            margin-bottom: 32px;
+        }
+
+        .settings-section h3 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #111;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-info h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .setting-info p {
+            font-size: 14px;
+            color: #767676;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 30px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #e60023;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .save-btn {
+            width: 100%;
+            background: #e60023;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .save-btn:hover {
+            background: #d50429;
+        }
+
+        .back-btn {
+            background: #efefef;
+            color: #111;
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: #ddd;
+        }
+
+        .privacy-info {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .privacy-info h4 {
+            color: #e60023;
+            margin-bottom: 8px;
+        }
+
+        .privacy-info ul {
+            margin-left: 16px;
+            color: #767676;
+        }
+
+        .privacy-info li {
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Simple Navbar -->
+    <nav class="navbar">
+        <div class="navbar-logo">
+            <a href="/"><i class="fab fa-pinterest"></i> PostKaro</a>
+        </div>
+        <ul class="navbar-actions">
+            <li><a href="/profile"><i class="fas fa-user"></i></a></li>
+            <li><a href="/conversations"><i class="fas fa-envelope"></i></a></li>
+            <li><a href="/logout"><i class="fas fa-sign-out-alt"></i></a></li>
+        </ul>
+    </nav>
+
+    <div class="settings-container">
+        <a href="/profile" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Back to Profile
+        </a>
+
+        <div class="settings-header">
+            <h1>Account Settings</h1>
+            <p>Manage your privacy and account preferences</p>
+        </div>
+
+        <form action="/update-privacy" method="POST">
+            <div class="settings-section">
+                <h3><i class="fas fa-shield-alt"></i> Privacy Settings</h3>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h4>Private Account</h4>
+                        <p>When your account is private, only people you approve can see your posts and send you messages</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="isPrivate" <%= user.isPrivate ? 'checked' : '' %>>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="privacy-info">
+                    <h4>Private Account Benefits:</h4>
+                    <ul>
+                        <li>Control who can see your posts</li>
+                        <li>Review follow requests before accepting</li>
+                        <li>Only followers can message you</li>
+                        <li>Better privacy protection</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3><i class="fas fa-user-edit"></i> Profile Information</h3>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h4>Bio</h4>
+                        <p>Tell people about yourself</p>
+                    </div>
+                </div>
+                <textarea name="bio" placeholder="Write something about yourself..." style="width: 100%; padding: 12px; border: 1px solid #e1e1e1; border-radius: 8px; resize: vertical; min-height: 80px;"><%= user.bio || '' %></textarea>
+                
+                <div class="setting-item" style="margin-top: 16px;">
+                    <div class="setting-info">
+                        <h4>Website</h4>
+                        <p>Add your website or social media link</p>
+                    </div>
+                </div>
+                <input type="url" name="website" placeholder="https://yourwebsite.com" value="<%= user.website || '' %>" style="width: 100%; padding: 12px; border: 1px solid #e1e1e1; border-radius: 8px;">
+            </div>
+
+            <button type="submit" class="save-btn">
+                <i class="fas fa-save"></i> Save Settings
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Show confirmation when changing privacy settings
+        const privateToggle = document.querySelector('input[name="isPrivate"]');
+        privateToggle.addEventListener('change', function() {
+            if (this.checked) {
+                if (!confirm('Making your account private will:\n\n• Hide your posts from non-followers\n• Require approval for new followers\n• Restrict messaging to followers only\n\nAre you sure you want to continue?')) {
+                    this.checked = false;
+                }
+            } else {
+                if (!confirm('Making your account public will:\n\n• Show your posts to everyone\n• Allow anyone to follow you\n• Allow anyone to message you\n\nAre you sure you want to continue?')) {
+                    this.checked = true;
+                }
+            }
+        });
+
+        // Form submission with loading state
+        const form = document.querySelector('form');
+        const saveBtn = document.querySelector('.save-btn');
+        
+        form.addEventListener('submit', function() {
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            saveBtn.disabled = true;
+        });
+    </script>
+</body>
+</html>

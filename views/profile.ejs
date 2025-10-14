@@ -88,49 +88,127 @@
       </p>
 
       <div class="profile-actions">
-        <% if (currentUser && currentUser._id.toString() === user._id.toString()) { %>
+        <% if (isOwnProfile) { %>
+          <!-- Follow Requests Button (only if there are pending requests) -->
+          <% if (user.followRequests && user.followRequests.length > 0) { %>
+            <a href="/follow-requests" class="profile-btn requests-btn">
+              <i class="fa-solid fa-user-clock"></i> 
+              Follow Requests (<%= user.followRequests.length %>)
+            </a>
+          <% } %>
+          
           <a href="/share" class="profile-btn share-btn"><i class="fa-solid fa-arrow-up-from-bracket"></i> Share</a>
-          <a href="/edit-profile" class="profile-btn edit-btn"><i class="fa-solid fa-user-pen"></i> Edit profile</a>
+          <a href="/account-settings" class="profile-btn edit-btn"><i class="fa-solid fa-user-pen"></i> Edit profile</a>
           <a href="/logout" class="profile-btn logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Log out</a>
+        <% } else if (currentUser) { %>
+          <!-- Follow/Unfollow Button -->
+          <% if (followStatus === 'following') { %>
+            <button id="followBtn" class="profile-btn following-btn" data-user-id="<%= user._id %>" data-action="unfollow">
+              <i class="fa-solid fa-user-check"></i> Following
+            </button>
+          <% } else if (followStatus === 'requested') { %>
+            <button id="followBtn" class="profile-btn requested-btn" data-user-id="<%= user._id %>" data-action="cancel-request">
+              <i class="fa-solid fa-clock"></i> Requested
+            </button>
+          <% } else { %>
+            <button id="followBtn" class="profile-btn follow-btn" data-user-id="<%= user._id %>" data-action="follow">
+              <i class="fa-solid fa-user-plus"></i> Follow
+            </button>
+          <% } %>
+
+          <!-- Message Button with different states based on account type -->
+          <% if (canMessage) { %>
+            <button onclick="window.location.href='/chat/<%= user._id %>'" class="profile-btn chat-btn">
+              <i class="fa-solid fa-envelope"></i> Message
+            </button>
+          <% } else if (followStatus === 'following') { %>
+            <button onclick="window.location.href='/chat/<%= user._id %>'" class="profile-btn chat-btn">
+              <i class="fa-solid fa-envelope"></i> Message
+            </button>
+          <% } else if (followStatus === 'requested') { %>
+            <button class="profile-btn chat-btn disabled" disabled title="Message after follow request is accepted">
+              <i class="fa-solid fa-envelope"></i> Message
+            </button>
+          <% } else if (user.isPrivate) { %>
+            <button class="profile-btn chat-btn disabled" disabled title="Follow this private account to send messages">
+              <i class="fa-solid fa-lock"></i> Message
+            </button>
+          <% } else { %>
+            <button onclick="window.location.href='/chat/<%= user._id %>'" class="profile-btn chat-btn">
+              <i class="fa-solid fa-envelope"></i> Message
+            </button>
+          <% } %>
+
+          <!-- Share Profile -->
+          <button class="profile-btn share-btn" onclick="shareProfile()">
+            <i class="fa-solid fa-share"></i> Share
+          </button>
         <% } else { %>
-          <a href="/follow/<%= user._id %>" class="profile-btn follow-btn"><i class="fa-solid fa-user-plus"></i> Follow</a>
-<button onclick="window.location.href='/chat/<%= user._id %>'" class="chat-btn">Chat</button>
-
-
+          <a href="/login" class="profile-btn follow-btn"><i class="fa-solid fa-sign-in-alt"></i> Login to Follow</a>
         <% } %>
       </div>
     </div>
   </div>
 
   <% if (currentUser && currentUser._id.toString() === user._id.toString()) { %>
-    <!-- Upload Section (only for self profile) -->
-    <div class="upload-section">
-      <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data" class="upload-form">
-        <div class="upload-cards">
-          <!-- Media Upload -->
-          <div class="upload-card">
-            <label for="fileInput" class="upload-label">
-              <div class="upload-icon"><i class="fa-regular fa-image"></i></div>
-              <span>Main Media (Image/Video)</span>
-            </label>
-            <input type="file" id="fileInput" name="file" accept="image/*,video/*" required />
+    <!-- Enhanced Create Pin Section -->
+    <div class="create-pin-section">
+      <div class="create-pin-header">
+        <h3><i class="fas fa-plus-circle"></i> Create a New Pin</h3>
+        <p>Share your ideas with the world</p>
+      </div>
+      
+      <form class="create-pin-form" action="/upload" method="POST" enctype="multipart/form-data">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="captionInput">Pin Title</label>
+            <input type="text" id="captionInput" name="caption" placeholder="What's your pin about?" required>
           </div>
-
-          <!-- Voice Note -->
-          <div class="voice-card upload-card">
-            <div class="voice-recorder">
-              <div style="display: flex; gap: 8px; align-items: center;">
-                <button id="recordBtn" type="button" class="rec-btn"><i class="fa-solid fa-microphone"></i></button>
-                <button id="stopBtn" type="button" class="stop-btn" disabled><i class="fa-solid fa-stop"></i></button>
+          
+          <div class="form-group">
+            <label for="descriptionInput">Description</label>
+            <textarea id="descriptionInput" name="description" placeholder="Tell everyone more about this pin..." rows="3"></textarea>
+          </div>
+        </div>
+        
+        <div class="media-upload-section">
+          <div class="file-input-wrapper">
+            <input type="file" name="media" class="file-input" id="mediaInput" accept="image/*,video/*,audio/*" required>
+            <label for="mediaInput" class="file-input-label">
+              <div class="upload-icon">
+                <i class="fas fa-cloud-upload-alt"></i>
               </div>
-              <span class="voice-label">Optional Voice Note</span>
+              <div class="upload-text">
+                <span class="upload-title">Choose your media</span>
+                <span class="upload-subtitle">Upload image, video, or audio</span>
+              </div>
+            </label>
+            <div class="file-preview" id="filePreview"></div>
+          </div>
+          
+          <div class="voice-note-section">
+            <div class="voice-recorder">
+              <div class="voice-header">
+                <i class="fas fa-microphone"></i>
+                <span>Add Voice Note (Optional)</span>
+              </div>
+              <div class="voice-controls">
+                <button id="recordBtn" type="button" class="voice-btn record-btn">
+                  <i class="fas fa-circle"></i> Record
+                </button>
+                <button id="stopBtn" type="button" class="voice-btn stop-btn" disabled>
+                  <i class="fas fa-stop"></i> Stop
+                </button>
+              </div>
               <audio id="audioPreview" controls style="display: none;"></audio>
               <input type="file" id="voiceFile" name="voice" hidden />
             </div>
           </div>
         </div>
-        <input type="text" id="captionInput" name="caption" placeholder="Write a caption..." required />
-        <button type="submit" class="upload-btn">Upload</button>
+        
+        <button type="submit" class="create-pin-btn">
+          <i class="fas fa-plus"></i> Create Pin
+        </button>
       </form>
     </div>
   <% } %>
@@ -143,42 +221,58 @@
 
   <!-- Created Posts -->
   <main class="pin-grid" id="createdGrid">
-    <% if (user.posts && user.posts.length > 0) { %>
-      <% user.posts.forEach(post => { %>
-        <div class="pin-card">
-          <% if (post.fileType === "image") { %>
-            <img src="<%= post.fileUrl %>" alt="User upload" />
-          <% } else if (post.fileType === "video") { %>
-            <video controls>
-              <source src="<%= post.fileUrl %>" type="video/mp4" />
-            </video>
-          <% } %>
-
-          <% if (post.voiceUrl) { %>
-            <div class="audio-post">
-              <audio controls>
-                <source src="<%= post.voiceUrl %>" type="audio/webm" />
-              </audio>
-            </div>
-          <% } %>
-
-          <div class="pin-content">
-            <p class="pin-caption"><%= post.caption || "No caption" %></p>
-            <form action="/post/<%= post._id %>/save" method="POST">
-              <button type="submit" class="save-btn"><i class="fa-regular fa-bookmark"></i> Save</button>
-            </form>
-
-            <% if (currentUser && currentUser._id.toString() === user._id.toString()) { %>
-              <!-- Delete post only for self -->
-              <form action="/post/<%= post._id %>/delete" method="POST">
-                <button type="submit" class="delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>
-              </form>
+    <% if (canViewPosts) { %>
+      <% if (user.posts && user.posts.length > 0) { %>
+        <% user.posts.forEach(post => { %>
+          <div class="pin-card">
+            <% if (post.fileType === "image") { %>
+              <img src="<%= post.fileUrl %>" alt="User upload" />
+            <% } else if (post.fileType === "video") { %>
+              <video controls>
+                <source src="<%= post.fileUrl %>" type="video/mp4" />
+              </video>
             <% } %>
+
+            <% if (post.voiceUrl) { %>
+              <div class="audio-post">
+                <audio controls>
+                  <source src="<%= post.voiceUrl %>" type="audio/webm" />
+                </audio>
+              </div>
+            <% } %>
+
+            <div class="pin-content">
+              <p class="pin-caption"><%= post.caption || "No caption" %></p>
+              <% if (currentUser) { %>
+                <form action="/post/<%= post._id %>/save" method="POST">
+                  <button type="submit" class="save-btn"><i class="fa-regular fa-bookmark"></i> Save</button>
+                </form>
+              <% } %>
+
+              <% if (currentUser && currentUser._id.toString() === user._id.toString()) { %>
+                <!-- Delete post only for self -->
+                <form action="/post/<%= post._id %>/delete" method="POST">
+                  <button type="submit" class="delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>
+                </form>
+              <% } %>
+            </div>
           </div>
-        </div>
-      <% }) %>
+        <% }) %>
+      <% } else { %>
+        <div class="no-posts"><p>No posts yet.</p></div>
+      <% } %>
     <% } else { %>
-      <div class="no-posts"><p>No posts yet.</p></div>
+      <!-- Private account - posts hidden -->
+      <div class="private-account-message">
+        <div class="private-icon">
+          <i class="fas fa-lock"></i>
+        </div>
+        <h3>This account is private</h3>
+        <p>Follow this account to see their posts and photos.</p>
+        <% if (followStatus === 'requested') { %>
+          <p class="request-status">Your follow request is pending.</p>
+        <% } %>
+      </div>
     <% } %>
   </main>
 
@@ -237,8 +331,9 @@
 
 <!-- Nothing to change in CSS: Saved uses the same .pin-grid, .pin-card, .pin-content, .pin-caption, .save-btn, .delete-btn classes as Created -->
 
-  <!-- Recorder Script -->
+  <!-- Enhanced Scripts -->
   <script>
+    // Voice recorder functionality
     let mediaRecorder, audioChunks = [];
     const recordBtn = document.getElementById("recordBtn");
     const stopBtn = document.getElementById("stopBtn");
@@ -255,6 +350,7 @@
 
           recordBtn.disabled = true;
           stopBtn.disabled = false;
+          recordBtn.innerHTML = '<i class="fas fa-circle"></i> Recording...';
           audioPreview.style.display = "none";
 
           mediaRecorder.ondataavailable = (e) => {
@@ -272,18 +368,61 @@
             const dt = new DataTransfer();
             dt.items.add(file);
             audioFileInput.files = dt.files;
+            
+            recordBtn.innerHTML = '<i class="fas fa-circle"></i> Record';
           };
         } catch (err) {
-          alert("Microphone access denied.");
+          alert("Microphone access denied or not available.");
+          console.error("Microphone error:", err);
         }
       });
 
       stopBtn.addEventListener("click", () => {
         if (mediaRecorder && mediaRecorder.state !== "inactive") {
           mediaRecorder.stop();
+          mediaRecorder.stream.getTracks().forEach(track => track.stop());
         }
         recordBtn.disabled = false;
         stopBtn.disabled = true;
+        recordBtn.innerHTML = '<i class="fas fa-circle"></i> Record';
+      });
+    }
+
+    // File input preview
+    const mediaInput = document.getElementById('mediaInput');
+    const filePreview = document.getElementById('filePreview');
+    
+    if (mediaInput) {
+      mediaInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const fileName = file.name;
+          const fileType = file.type.split('/')[0];
+          let icon = 'fas fa-file';
+          
+          if (fileType === 'image') icon = 'fas fa-image';
+          else if (fileType === 'video') icon = 'fas fa-video';
+          else if (fileType === 'audio') icon = 'fas fa-music';
+          
+          filePreview.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <i class="${icon}" style="color: var(--pinterest-red, #e60023); font-size: 20px;"></i>
+              <div>
+                <div style="font-weight: 600; color: #333;">${fileName}</div>
+                <div style="font-size: 12px; color: #666;">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+              </div>
+            </div>
+          `;
+          filePreview.classList.add('active');
+          
+          // Update upload label
+          const uploadTitle = document.querySelector('.upload-title');
+          const uploadSubtitle = document.querySelector('.upload-subtitle');
+          if (uploadTitle && uploadSubtitle) {
+            uploadTitle.textContent = 'File selected!';
+            uploadSubtitle.textContent = 'Click to change file';
+          }
+        }
       });
     }
   </script>
@@ -401,6 +540,176 @@
 
     // Update counts every 30 seconds
     setInterval(updateNotificationCounts, 30000);
+
+    // Follow/Unfollow functionality
+    const followBtn = document.getElementById('followBtn');
+    if (followBtn) {
+      followBtn.addEventListener('click', async function() {
+        const userId = this.dataset.userId;
+        const action = this.dataset.action;
+        
+        try {
+          let response;
+          if (action === 'follow') {
+            response = await fetch(`/follow/follow/${userId}`, { method: 'POST' });
+          } else if (action === 'unfollow' || action === 'cancel-request') {
+            response = await fetch(`/follow/unfollow/${userId}`, { method: 'POST' });
+          }
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            // Update button based on response
+            updateFollowButton(data.status, data.isPrivate);
+            showToast(data.message);
+            
+            // Update follower count
+            if (data.status === 'following') {
+              incrementFollowerCount();
+            } else if (data.status === 'not_following') {
+              decrementFollowerCount();
+            }
+          } else {
+            showToast(data.message, 'error');
+          }
+        } catch (error) {
+          console.error('Follow error:', error);
+          showToast('Something went wrong. Please try again.', 'error');
+        }
+      });
+    }
+
+    function updateFollowButton(status, isPrivate) {
+      const followBtn = document.getElementById('followBtn');
+      if (!followBtn) return;
+
+      if (status === 'following') {
+        followBtn.className = 'profile-btn following-btn';
+        followBtn.innerHTML = '<i class="fa-solid fa-user-check"></i> Following';
+        followBtn.dataset.action = 'unfollow';
+        
+        // Enable message button if it exists
+        const chatBtn = document.querySelector('.chat-btn');
+        if (chatBtn && chatBtn.disabled) {
+          chatBtn.disabled = false;
+          chatBtn.classList.remove('disabled');
+          chatBtn.title = '';
+          chatBtn.onclick = () => window.location.href = `/chat/${followBtn.dataset.userId}`;
+          chatBtn.innerHTML = '<i class="fa-solid fa-envelope"></i> Message';
+        }
+      } else if (status === 'requested') {
+        followBtn.className = 'profile-btn requested-btn';
+        followBtn.innerHTML = '<i class="fa-solid fa-clock"></i> Requested';
+        followBtn.dataset.action = 'cancel-request';
+        
+        // Update message button for pending request
+        const chatBtn = document.querySelector('.chat-btn');
+        if (chatBtn) {
+          chatBtn.disabled = true;
+          chatBtn.classList.add('disabled');
+          chatBtn.title = 'Message after follow request is accepted';
+          chatBtn.onclick = null;
+          if (isPrivate) {
+            chatBtn.innerHTML = '<i class="fa-solid fa-clock"></i> Pending';
+          }
+        }
+      } else {
+        followBtn.className = 'profile-btn follow-btn';
+        followBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Follow';
+        followBtn.dataset.action = 'follow';
+        
+        // Update message button based on account type
+        const chatBtn = document.querySelector('.chat-btn');
+        if (chatBtn) {
+          if (isPrivate) {
+            chatBtn.disabled = true;
+            chatBtn.classList.add('disabled');
+            chatBtn.title = 'Follow this private account to send messages';
+            chatBtn.innerHTML = '<i class="fa-solid fa-lock"></i> Message';
+            chatBtn.onclick = null;
+          } else {
+            // Public account - can message without following
+            chatBtn.disabled = false;
+            chatBtn.classList.remove('disabled');
+            chatBtn.title = '';
+            chatBtn.onclick = () => window.location.href = `/chat/${followBtn.dataset.userId}`;
+            chatBtn.innerHTML = '<i class="fa-solid fa-envelope"></i> Message';
+          }
+        }
+      }
+    }
+
+    function incrementFollowerCount() {
+      const followerStat = document.querySelector('.profile-stat');
+      if (followerStat) {
+        const currentCount = parseInt(followerStat.querySelector('b').textContent);
+        followerStat.querySelector('b').textContent = currentCount + 1;
+      }
+    }
+
+    function decrementFollowerCount() {
+      const followerStat = document.querySelector('.profile-stat');
+      if (followerStat) {
+        const currentCount = parseInt(followerStat.querySelector('b').textContent);
+        followerStat.querySelector('b').textContent = Math.max(0, currentCount - 1);
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      
+      const style = document.createElement('style');
+      style.textContent = `
+        .toast {
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          padding: 12px 24px;
+          border-radius: 8px;
+          color: white;
+          font-weight: 500;
+          z-index: 10000;
+          animation: slideUp 0.3s ease-out;
+        }
+        .toast-success { background: #10b981; }
+        .toast-error { background: #ef4444; }
+        @keyframes slideUp {
+          from { transform: translateY(100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `;
+      
+      if (!document.querySelector('style[data-toast]')) {
+        style.setAttribute('data-toast', 'true');
+        document.head.appendChild(style);
+      }
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideUp 0.3s ease-out reverse';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function shareProfile() {
+      const profileUrl = window.location.href;
+      const userName = '<%= user.fullname %>';
+      
+      if (navigator.share) {
+        navigator.share({
+          title: `${userName}'s Profile`,
+          text: `Check out ${userName}'s profile on PostKaro`,
+          url: profileUrl
+        }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(profileUrl).then(() => {
+          showToast('Profile link copied to clipboard!');
+        });
+      }
+    }
   </script>
 </body>
 </html>

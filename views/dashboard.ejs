@@ -3,117 +3,446 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Your Pins | Pinterest</title>
-    <link rel="stylesheet" href="/stylesheets/explore.css">
+    <title>Your Posts - PostKaro</title>
+    <link rel="stylesheet" href="/stylesheets/pinterest-feed.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .dashboard-header {
-            text-align: center;
-            padding: 48px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            margin-bottom: 32px;
+        :root {
+            --pinterest-red: #e60023;
+            --pinterest-black: #111;
+            --pinterest-grey: #767676;
+            --pinterest-light-grey: #e9e9e9;
+            --pinterest-hover: #f1f1f1;
+            --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.15);
+            --shadow-heavy: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
-        
-        .dashboard-header h1 {
-            font-size: 48px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
-        .dashboard-stats {
-            display: flex;
-            justify-content: center;
-            gap: 32px;
-            margin-top: 24px;
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+            background: #ffffff;
+            color: var(--pinterest-black);
+            line-height: 1.5;
         }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-number {
-            font-size: 32px;
-            font-weight: bold;
-            display: block;
-        }
-        
-        .stat-label {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        
-        .create-pin-btn {
+
+        /* Modern Navigation */
+        .navbar {
             position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: var(--pinterest-red);
-            color: white;
-            border: none;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: 0 4px 16px rgba(230, 0, 35, 0.4);
-            transition: all 0.3s ease;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--pinterest-light-grey);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
             z-index: 1000;
         }
-        
-        .create-pin-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(230, 0, 35, 0.6);
-        }
-        
-        .filter-tabs {
+
+        .navbar-logo a {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--pinterest-red);
+            text-decoration: none;
             display: flex;
-            justify-content: center;
-            gap: 16px;
-            margin-bottom: 32px;
-            padding: 0 16px;
+            align-items: center;
+            gap: 8px;
         }
-        
-        .filter-tab {
-            padding: 12px 24px;
-            border: 2px solid #e1e1e1;
-            border-radius: 24px;
-            background: white;
+
+        .navbar-types {
+            display: flex;
+            list-style: none;
+            gap: 32px;
+        }
+
+        .navbar-types a {
             color: var(--pinterest-black);
             text-decoration: none;
             font-weight: 600;
+            font-size: 16px;
+            padding: 8px 16px;
+            border-radius: 24px;
             transition: all 0.2s ease;
         }
-        
+
+        .navbar-types a:hover,
+        .navbar-types a.active {
+            background: var(--pinterest-hover);
+        }
+
+        .navbar-search {
+            flex: 1;
+            max-width: 400px;
+            margin: 0 40px;
+            position: relative;
+        }
+
+        .navbar-search input {
+            width: 100%;
+            padding: 16px 20px;
+            border: none;
+            border-radius: 24px;
+            background: var(--pinterest-light-grey);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .navbar-search input:focus {
+            background: white;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .navbar-actions {
+            display: flex;
+            list-style: none;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .navbar-actions a {
+            color: var(--pinterest-black);
+            font-size: 20px;
+            padding: 12px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .navbar-actions a:hover {
+            background: var(--pinterest-hover);
+        }
+
+        /* Clean Header Section */
+        .dashboard-header {
+            margin-top: 80px;
+            padding: 48px 24px;
+            text-align: center;
+            background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+            border-bottom: 1px solid var(--pinterest-light-grey);
+        }
+
+        .dashboard-header h1 {
+            font-size: 40px;
+            font-weight: 800;
+            color: var(--pinterest-black);
+            margin-bottom: 12px;
+        }
+
+        .dashboard-header p {
+            font-size: 18px;
+            color: var(--pinterest-grey);
+            margin-bottom: 32px;
+        }
+
+        .dashboard-stats {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            margin-top: 24px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--pinterest-black);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--pinterest-grey);
+            font-weight: 500;
+        }
+
+        /* Clean Filter Tabs */
+        .filter-section {
+            padding: 32px 24px;
+            text-align: center;
+            background: white;
+            border-bottom: 1px solid var(--pinterest-light-grey);
+        }
+
+        .filter-tabs {
+            display: inline-flex;
+            gap: 8px;
+            padding: 4px;
+            background: var(--pinterest-light-grey);
+            border-radius: 28px;
+        }
+
+        .filter-tab {
+            padding: 12px 24px;
+            border-radius: 24px;
+            background: transparent;
+            color: var(--pinterest-grey);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+
         .filter-tab.active,
         .filter-tab:hover {
-            border-color: var(--pinterest-red);
+            background: white;
+            color: var(--pinterest-black);
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Pinterest Masonry Container */
+        .pinterest-container {
+            columns: 6;
+            column-gap: 16px;
+            padding: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Responsive columns */
+        @media (max-width: 1400px) { .pinterest-container { columns: 5; } }
+        @media (max-width: 1200px) { .pinterest-container { columns: 4; } }
+        @media (max-width: 900px) { .pinterest-container { columns: 3; } }
+        @media (max-width: 600px) { .pinterest-container { columns: 2; } }
+        @media (max-width: 400px) { .pinterest-container { columns: 1; } }
+        /* Modern Pin Cards */
+        .pin-card {
+            break-inside: avoid;
+            margin-bottom: 16px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .pin-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .pin-media {
+            position: relative;
+            overflow: hidden;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .pin-media img,
+        .pin-media video {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+
+        .pin-card:hover .pin-media img,
+        .pin-card:hover .pin-media video {
+            transform: scale(1.05);
+        }
+
+        .audio-pin {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .audio-pin i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.9;
+        }
+
+        .audio-pin p {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Modern Pin Overlay */
+        .pin-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 16px;
+        }
+
+        .pin-card:hover .pin-overlay {
+            opacity: 1;
+        }
+
+        .pin-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pin-user .user-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .pin-user img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .pin-actions {
+            display: flex;
+            gap: 8px;
+            align-self: flex-end;
+        }
+
+        .pin-actions button {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--pinterest-black);
+        }
+
+        .pin-actions button:hover {
+            background: white;
+            transform: scale(1.05);
+        }
+
+        .pin-actions .save-btn {
             background: var(--pinterest-red);
             color: white;
         }
-        
+
+        .pin-actions .save-btn:hover {
+            background: #d50429;
+        }
+
+        /* Clean Pin Info */
+        .pin-info {
+            padding: 16px;
+            background: white;
+        }
+
+        .pin-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--pinterest-black);
+            margin-bottom: 8px;
+            line-height: 1.3;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .pin-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--pinterest-grey);
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .pin-meta img {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .pin-info p {
+            color: var(--pinterest-grey);
+            font-size: 14px;
+            line-height: 1.4;
+            margin-top: 8px;
+        }
+
+        /* Voice Note Styling */
+        .voice-note {
+            background: var(--pinterest-light-grey);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-top: 1px solid #eee;
+        }
+
+        .voice-note i {
+            color: var(--pinterest-red);
+            font-size: 16px;
+        }
+
+        .voice-note audio {
+            flex: 1;
+            height: 32px;
+        }
+
+        /* Empty State */
         .empty-state {
             text-align: center;
-            padding: 64px 24px;
+            padding: 80px 24px;
             color: var(--pinterest-grey);
+            max-width: 500px;
+            margin: 0 auto;
         }
         
         .empty-state i {
-            font-size: 64px;
+            font-size: 80px;
             margin-bottom: 24px;
             color: var(--pinterest-light-grey);
         }
         
         .empty-state h3 {
-            font-size: 24px;
+            font-size: 28px;
             margin-bottom: 16px;
             color: var(--pinterest-black);
+            font-weight: 700;
         }
         
         .empty-state p {
             font-size: 16px;
-            max-width: 400px;
-            margin: 0 auto 24px;
+            line-height: 1.5;
+            margin-bottom: 32px;
         }
         
         .create-first-pin-btn {
@@ -126,102 +455,255 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .create-first-pin-btn:hover {
-            background: var(--pinterest-dark-red);
-            transform: scale(1.05);
+            background: #d50429;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        /* Floating Action Button */
+        .create-pin-btn {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            background: var(--pinterest-red);
+            color: white;
+            border: none;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: var(--shadow-heavy);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .create-pin-btn:hover {
+            transform: scale(1.1);
+            background: #d50429;
+            box-shadow: 0 12px 40px rgba(230, 0, 35, 0.4);
+        }
+
+        /* Loading and Animation */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--pinterest-red);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Search Results */
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow-medium);
+            margin-top: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1001;
+            display: none;
+        }
+
+        .search-item {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .search-item:hover {
+            background: var(--pinterest-hover);
+        }
+
+        .search-item img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 16px;
+            }
+
+            .navbar-types {
+                display: none;
+            }
+
+            .navbar-search {
+                margin: 0 20px;
+                max-width: none;
+            }
+
+            .dashboard-header {
+                padding: 32px 16px;
+            }
+
+            .dashboard-header h1 {
+                font-size: 32px;
+            }
+
+            .dashboard-stats {
+                gap: 24px;
+            }
+
+            .stat-number {
+                font-size: 24px;
+            }
+
+            .filter-section {
+                padding: 24px 16px;
+            }
+
+            .pinterest-container {
+                padding: 16px;
+            }
+
+            .create-pin-btn {
+                bottom: 24px;
+                right: 24px;
+                width: 56px;
+                height: 56px;
+                font-size: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
+    <!-- Modern Navigation Bar -->
     <nav class="navbar">
         <div class="navbar-logo">
-            <a href="/feed"><i class="fab fa-pinterest"></i>Pinterest</a>
+            <a href="/"><i class="fab fa-pinterest"></i> PostKaro</a>
         </div>
         
         <ul class="navbar-types">
-            <li><a href="/feed" class="nav-link">Home</a></li>
-            <li><a href="/explore" class="nav-link">Explore</a></li>
-            <li><a href="/dashboard" class="nav-link active">Dashboard</a></li>
+            <li><a href="/">Home</a></li>
+            <li><a href="/feed">Your Feed</a></li>
+            <li><a href="/explore">Explore</a></li>
+            <li><a href="/dashboard" class="active">Your Posts</a></li>
         </ul>
         
         <div class="navbar-search">
-            <input type="text" id="searchInput" placeholder="Search for pins, users...">
-            <div class="search-results" id="searchResults">
-                <!-- Search results will be populated here -->
-            </div>
+            <input type="text" id="searchInput" placeholder="Search your pins..." autocomplete="off">
+            <div class="search-results" id="searchResults"></div>
         </div>
         
         <ul class="navbar-actions">
-            <li class="navbar-icon-container">
-                <a href="/notifications" class="nav-link">
+            <li>
+                <a href="/notifications">
                     <i class="fas fa-bell"></i>
-                    <span class="notification-badge" id="notificationBadge">0</span>
+                    <span class="notification-badge hidden" id="notificationBadge">0</span>
                 </a>
             </li>
-            <li class="navbar-icon-container">
-                <a href="/conversations" class="nav-link">
-                    <i class="fas fa-comment"></i>
-                    <span class="notification-badge message-badge" id="messageBadge">0</span>
+            <li>
+                <a href="/conversations">
+                    <i class="fas fa-envelope"></i>
+                    <span class="notification-badge message-badge hidden" id="messageBadge">0</span>
                 </a>
             </li>
-            <li><a href="/profile/<%= user._id %>" class="nav-link"><i class="fas fa-user"></i></a></li>
-            <li><a href="/logout" class="nav-link"><i class="fas fa-sign-out-alt"></i></a></li>
+            <li><a href="/profile/<%= user._id %>"><i class="fas fa-user"></i></a></li>
+            <li><a href="/logout"><i class="fas fa-sign-out-alt"></i></a></li>
         </ul>
     </nav>
 
-    <!-- Dashboard Header -->
+    <!-- Clean Dashboard Header -->
     <div class="dashboard-header">
-        <h1>Your Creative Dashboard</h1>
-        <p>Manage and showcase your amazing pins</p>
+        <h1>Your Posts</h1>
+        <p>Manage and showcase your creative pins</p>
         
         <div class="dashboard-stats">
             <div class="stat-item">
-                <span class="stat-number" id="totalPins"><%= posts.length %></span>
-                <span class="stat-label">Pins</span>
+                <span class="stat-number"><%= posts.length %></span>
+                <span class="stat-label">Total Pins</span>
             </div>
             <div class="stat-item">
-                <span class="stat-number" id="totalViews">
-                    <%= posts.reduce((sum, post) => sum + (post.views || 0), 0) %>
-                </span>
-                <span class="stat-label">Views</span>
+                <span class="stat-number"><%= posts.reduce((sum, post) => sum + (post.views || 0), 0) %></span>
+                <span class="stat-label">Total Views</span>
             </div>
             <div class="stat-item">
-                <span class="stat-number" id="totalLikes">
-                    <%= posts.reduce((sum, post) => sum + (post.likes ? post.likes.length : 0), 0) %>
-                </span>
-                <span class="stat-label">Likes</span>
+                <span class="stat-number"><%= posts.reduce((sum, post) => sum + (post.likes ? post.likes.length : 0), 0) %></span>
+                <span class="stat-label">Total Likes</span>
             </div>
         </div>
     </div>
 
-    <!-- Filter Tabs -->
-    <div class="filter-tabs">
-        <a href="#" class="filter-tab active" data-filter="all">All Pins</a>
-        <a href="#" class="filter-tab" data-filter="images">Images</a>
-        <a href="#" class="filter-tab" data-filter="videos">Videos</a>
-        <a href="#" class="filter-tab" data-filter="audio">Audio</a>
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">All Pins</button>
+            <button class="filter-tab" data-filter="images">Images</button>
+            <button class="filter-tab" data-filter="videos">Videos</button>
+            <button class="filter-tab" data-filter="audio">Audio</button>
+        </div>
     </div>
 
-    <!-- Pinterest Masonry Layout -->
+    <!-- Clean Pinterest Masonry Layout -->
     <% if (posts && posts.length > 0) { %>
         <div class="pinterest-container" id="pinterestContainer">
             <% posts.forEach(function(post) { %>
-                <div class="pin-card" data-type="<%= post.fileType === 'image' ? 'images' : 'videos' %>">
+                <div class="pin-card fade-in" data-type="<%= post.fileType === 'image' ? 'images' : (post.fileType === 'video' ? 'videos' : 'audio') %>">
                     <div class="pin-media">
                         <% if (post.fileType === "image") { %>
-                            <img src="<%= post.fileUrl %>" alt="<%= post.caption || 'Pin image' %>">
+                            <img src="<%= post.fileUrl %>" alt="<%= post.caption || 'Pin image' %>" loading="lazy">
                         <% } else if (post.fileType === "video") { %>
-                            <video controls>
+                            <video preload="metadata">
                                 <source src="<%= post.fileUrl %>" type="video/webm">
+                                <source src="<%= post.fileUrl %>" type="video/mp4">
                                 Your browser does not support the video tag.
                             </video>
                         <% } else { %>
                             <div class="audio-pin">
                                 <i class="fas fa-music"></i>
-                                <p>Media Pin</p>
+                                <p>Audio Pin</p>
                             </div>
                         <% } %>
                         
@@ -233,9 +715,15 @@
                                 </a>
                             </div>
                             <div class="pin-actions">
-                                <button class="save-btn">Edit</button>
-                                <button class="share-btn" title="Share"><i class="fas fa-share"></i></button>
-                                <button class="more-btn" title="More options"><i class="fas fa-ellipsis-h"></i></button>
+                                <button class="save-btn" data-pin-id="<%= post._id %>">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="share-btn" title="Share" data-pin-id="<%= post._id %>">
+                                    <i class="fas fa-share"></i>
+                                </button>
+                                <button class="more-btn" title="More options" data-pin-id="<%= post._id %>">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -243,24 +731,23 @@
                     <div class="pin-info">
                         <h3 class="pin-title"><%= post.caption || 'Untitled Pin' %></h3>
                         <div class="pin-meta">
-                            <img src="<%= user.dp || '/images/default-avatar.svg' %>" alt="<%= user.username %>">
+                            <img src="<%= user.dp || '/images/default-avatar.png' %>" alt="<%= user.username %>">
                             <span><%= user.username %></span>
                             <span>•</span>
                             <span><%= Math.floor((Date.now() - new Date(post.createdAt).getTime()) / (1000 * 60 * 60 * 24)) %>d ago</span>
                         </div>
                         
-                        <% if (post.caption && post.caption.length > 50) { %>
-                            <p style="margin-top: 8px; color: var(--pinterest-grey); font-size: 14px; line-height: 1.4;">
-                                <%= post.caption.slice(0, 100) %>...
-                            </p>
+                        <% if (post.caption && post.caption.length > 80) { %>
+                            <p><%= post.caption.slice(0, 120) %>...</p>
                         <% } %>
                     </div>
                     
                     <% if (post.voiceUrl) { %>
                         <div class="voice-note">
                             <i class="fas fa-microphone"></i>
-                            <audio controls>
+                            <audio controls preload="metadata">
                                 <source src="<%= post.voiceUrl %>" type="audio/webm">
+                                <source src="<%= post.voiceUrl %>" type="audio/wav">
                                 Your browser does not support the audio element.
                             </audio>
                         </div>
@@ -270,97 +757,192 @@
         </div>
     <% } else { %>
         <div class="empty-state">
-            <i class="fas fa-pin"></i>
+            <i class="fas fa-images"></i>
             <h3>No pins yet</h3>
             <p>Start creating amazing pins to showcase your creativity. Your pins will appear here once you create them.</p>
-            <button class="create-first-pin-btn" onclick="window.location.href='/feed'">
-                <i class="fas fa-plus"></i> Create Your First Pin
+            <button class="create-first-pin-btn" onclick="window.location.href='/profile/<%= user._id %>'">
+                <i class="fas fa-plus"></i>
+                Create Your First Pin
             </button>
         </div>
     <% } %>
 
-    <!-- Floating Create Button -->
-    <button class="create-pin-btn" onclick="window.location.href='/feed'" title="Create new pin">
+    <!-- Modern Floating Action Button -->
+    <button class="create-pin-btn" onclick="window.location.href='/profile/<%= user._id %>'" title="Create new pin">
         <i class="fas fa-plus"></i>
     </button>
 
     <script>
-        // Initialize Pinterest-style masonry layout
-        function initMasonry() {
-            const container = document.getElementById('pinterestContainer');
-            if (!container) return;
+        // Modern Pinterest-style functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeInterface();
+            loadNotificationCounts();
+            initializeFilters();
+            initializeSearch();
+            initializePinInteractions();
             
-            const cards = container.querySelectorAll('.pin-card');
-            const columns = Math.floor(container.offsetWidth / 252); // 236px + 16px gap
-            const columnHeights = new Array(columns).fill(0);
-            
-            cards.forEach(card => {
-                const shortestColumn = columnHeights.indexOf(Math.min(...columnHeights));
-                card.style.position = 'absolute';
-                card.style.left = `${shortestColumn * 252}px`;
-                card.style.top = `${columnHeights[shortestColumn]}px`;
-                columnHeights[shortestColumn] += card.offsetHeight + 16;
+            // Refresh notification counts every 30 seconds
+            setInterval(loadNotificationCounts, 30000);
+        });
+
+        // Initialize modern interface
+        function initializeInterface() {
+            // Add stagger animation to pin cards
+            const pinCards = document.querySelectorAll('.pin-card');
+            pinCards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
             });
-            
-            container.style.height = `${Math.max(...columnHeights)}px`;
-            container.style.position = 'relative';
+
+            // Initialize video controls
+            initializeVideoControls();
         }
 
-        // Search functionality
-        const searchInput = document.getElementById('searchInput');
-        const searchResults = document.getElementById('searchResults');
-
-        searchInput.addEventListener('input', function() {
-            const query = this.value.trim();
-            if (query.length > 0) {
-                // Simulate search results
-                searchResults.innerHTML = `
-                    <div class="search-item">
-                        <img src="/images/default-avatar.png" alt="User">
-                        <span>Search for "${query}"</span>
-                    </div>
-                `;
-                searchResults.style.display = 'block';
-            } else {
-                searchResults.style.display = 'none';
-            }
-        });
-
-        // Hide search results when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.style.display = 'none';
-            }
-        });
-
-        // Filter functionality
-        const filterTabs = document.querySelectorAll('.filter-tab');
-        const pinCards = document.querySelectorAll('.pin-card');
-
-        filterTabs.forEach(tab => {
-            tab.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Update active tab
-                filterTabs.forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-                
-                const filter = this.dataset.filter;
-                
-                // Filter pins
-                pinCards.forEach(card => {
-                    const cardType = card.dataset.type;
-                    if (filter === 'all' || cardType === filter) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
+        // Enhanced video controls
+        function initializeVideoControls() {
+            const videos = document.querySelectorAll('.pin-media video');
+            videos.forEach(video => {
+                video.addEventListener('mouseenter', () => {
+                    video.play().catch(() => {});
                 });
                 
-                // Reinitialize masonry after filtering
-                setTimeout(initMasonry, 100);
+                video.addEventListener('mouseleave', () => {
+                    video.pause();
+                    video.currentTime = 0;
+                });
+                
+                video.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (video.paused) {
+                        video.play();
+                    } else {
+                        video.pause();
+                    }
+                });
             });
-        });
+        }
+
+        // Modern filter functionality
+        function initializeFilters() {
+            const filterTabs = document.querySelectorAll('.filter-tab');
+            const pinCards = document.querySelectorAll('.pin-card');
+
+            filterTabs.forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Update active tab
+                    filterTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const filter = this.dataset.filter;
+                    
+                    // Smooth filter animation
+                    pinCards.forEach((card, index) => {
+                        const cardType = card.dataset.type;
+                        
+                        if (filter === 'all' || cardType === filter) {
+                            card.style.display = 'block';
+                            card.style.animation = `fadeIn 0.5s ease-out ${index * 0.05}s both`;
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        }
+
+        // Enhanced search functionality  
+        function initializeSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const searchResults = document.getElementById('searchResults');
+            let searchTimeout;
+
+            searchInput.addEventListener('input', function() {
+                const query = this.value.trim();
+                clearTimeout(searchTimeout);
+                
+                if (query.length > 0) {
+                    searchTimeout = setTimeout(() => performSearch(query), 300);
+                    searchResults.style.display = 'block';
+                } else {
+                    searchResults.style.display = 'none';
+                }
+            });
+
+            // Hide search results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.style.display = 'none';
+                }
+            });
+        }
+
+        function performSearch(query) {
+            const searchResults = document.getElementById('searchResults');
+            // Simple local search through pins
+            searchResults.innerHTML = `
+                <div class="search-item">
+                    <i class="fas fa-search"></i>
+                    <span>Search for "${query}" in your pins</span>
+                </div>
+            `;
+        }
+
+        // Modern pin interactions
+        function initializePinInteractions() {
+            document.addEventListener('click', function(e) {
+                // Edit pin
+                if (e.target.closest('.save-btn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const pinId = e.target.closest('.save-btn').dataset.pinId;
+                    handleEditPin(pinId);
+                }
+                
+                // Share pin
+                if (e.target.closest('.share-btn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const pinId = e.target.closest('.share-btn').dataset.pinId;
+                    handleSharePin(pinId);
+                }
+                
+                // More options
+                if (e.target.closest('.more-btn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const pinId = e.target.closest('.more-btn').dataset.pinId;
+                    handleMoreOptions(pinId);
+                }
+            });
+        }
+
+        function handleEditPin(pinId) {
+            // Add edit functionality
+            console.log('Edit pin:', pinId);
+            showToast('Edit functionality coming soon!');
+        }
+
+        function handleSharePin(pinId) {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Check out this pin!',
+                    url: `${window.location.origin}/post/${pinId}`
+                }).catch(() => {});
+            } else {
+                // Fallback - copy to clipboard
+                const url = `${window.location.origin}/post/${pinId}`;
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast('Link copied to clipboard!');
+                });
+            }
+        }
+
+        function handleMoreOptions(pinId) {
+            // Show more options menu
+            console.log('More options for pin:', pinId);
+            showToast('More options coming soon!');
+        }
 
         // Load notification counts
         async function loadNotificationCounts() {
@@ -368,81 +950,63 @@
                 const response = await fetch('/notification-counts');
                 const data = await response.json();
                 
-                const notificationBadge = document.getElementById('notificationBadge');
-                const messageBadge = document.getElementById('messageBadge');
-                
-                if (data.notifications > 0) {
-                    notificationBadge.textContent = data.notifications > 99 ? '99+' : data.notifications;
-                    notificationBadge.classList.remove('hidden');
-                } else {
-                    notificationBadge.classList.add('hidden');
-                }
-                
-                if (data.messages > 0) {
-                    messageBadge.textContent = data.messages > 99 ? '99+' : data.messages;
-                    messageBadge.classList.remove('hidden');
-                } else {
-                    messageBadge.classList.add('hidden');
-                }
+                updateNotificationBadge('notificationBadge', data.notifications);
+                updateNotificationBadge('messageBadge', data.messages);
             } catch (error) {
                 console.log('Could not load notification counts');
             }
         }
 
-        // Pin interaction handlers
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('save-btn')) {
-                e.preventDefault();
-                // Handle edit pin action
-                console.log('Edit pin clicked');
+        function updateNotificationBadge(badgeId, count) {
+            const badge = document.getElementById(badgeId);
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
             }
-            
-            if (e.target.closest('.share-btn')) {
-                e.preventDefault();
-                // Handle share action
-                if (navigator.share) {
-                    navigator.share({
-                        title: 'Check out this pin!',
-                        url: window.location.href
-                    });
-                } else {
-                    // Fallback for browsers without Web Share API
-                    navigator.clipboard.writeText(window.location.href);
-                    alert('Link copied to clipboard!');
-                }
-            }
-        });
-
-        // Initialize everything when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            loadNotificationCounts();
-            setTimeout(initMasonry, 100);
-            
-            // Refresh notification counts every 30 seconds
-            setInterval(loadNotificationCounts, 30000);
-        });
-
-        // Handle window resize
-        window.addEventListener('resize', function() {
-            setTimeout(initMasonry, 100);
-        });
-
-        // Add pulsing animation to notification badges
-        setInterval(() => {
-            const badges = document.querySelectorAll('.notification-badge:not(.hidden)');
-            badges.forEach(badge => {
-                badge.style.animation = 'pulse 1s ease-in-out';
-                setTimeout(() => badge.style.animation = '', 1000);
-            });
-        }, 5000);
-    </script>
-
-    <style>
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
         }
-    </style>
+
+        // Modern toast notification
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 32px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 24px;
+                font-size: 14px;
+                font-weight: 500;
+                z-index: 10000;
+                animation: slideUp 0.3s ease-out;
+            `;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideDown 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        // CSS animations for toast
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideUp {
+                from { transform: translateX(-50%) translateY(100%); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            }
+            @keyframes slideDown {
+                from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                to { transform: translateX(-50%) translateY(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 </body>
 </html>

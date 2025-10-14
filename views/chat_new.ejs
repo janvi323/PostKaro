@@ -17,19 +17,9 @@
       </a>
       
       <div class="header-user-info">
-        <% if (otherUser.dp && otherUser.dp !== '/images/default-avatar.png' && otherUser.dp !== '/images/default-avatar.svg' && otherUser.dp.length > 10) { %>
-          <img src="<%= otherUser.dp %>" 
-               alt="<%= otherUser.username %>" 
-               class="header-avatar"
-               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-          <div class="header-avatar avatar-emoji" style="display: none;">
-            👤
-          </div>
-        <% } else { %>
-          <div class="header-avatar avatar-emoji">
-            👤
-          </div>
-        <% } %>
+        <img src="<%= otherUser.dp || '/images/default-avatar.svg' %>" 
+             alt="<%= otherUser.username %>" 
+             class="header-avatar">
         
         <div class="header-user-details">
           <h3><%= otherUser.fullname || otherUser.username %></h3>
@@ -56,19 +46,9 @@
         <% messages.forEach(function(message) { %>
           <div class="message <%= message.sender._id.toString() === currentUser._id.toString() ? 'sent' : 'received' %>">
             <% if (message.sender._id.toString() !== currentUser._id.toString()) { %>
-              <% if (message.sender.dp && message.sender.dp !== '/images/default-avatar.png' && message.sender.dp !== '/images/default-avatar.svg' && message.sender.dp.length > 10) { %>
-                <img src="<%= message.sender.dp %>" 
-                     alt="<%= message.sender.username %>" 
-                     class="message-avatar"
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="message-avatar avatar-emoji" style="display: none;">
-                  👤
-                </div>
-              <% } else { %>
-                <div class="message-avatar avatar-emoji">
-                  👤
-                </div>
-              <% } %>
+              <img src="<%= message.sender.dp || '/images/default-avatar.svg' %>" 
+                   alt="<%= message.sender.username %>" 
+                   class="message-avatar">
             <% } %>
             
             <div class="message-content">
@@ -85,19 +65,9 @@
             </div>
             
             <% if (message.sender._id.toString() === currentUser._id.toString()) { %>
-              <% if (currentUser.dp && currentUser.dp !== '/images/default-avatar.png' && currentUser.dp !== '/images/default-avatar.svg' && currentUser.dp.length > 10) { %>
-                <img src="<%= currentUser.dp %>" 
-                     alt="<%= currentUser.username %>" 
-                     class="message-avatar"
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="message-avatar avatar-emoji" style="display: none;">
-                  👤
-                </div>
-              <% } else { %>
-                <div class="message-avatar avatar-emoji">
-                  👤
-                </div>
-              <% } %>
+              <img src="<%= currentUser.dp || '/images/default-avatar.svg' %>" 
+                   alt="<%= currentUser.username %>" 
+                   class="message-avatar">
             <% } %>
           </div>
         <% }); %>
@@ -131,7 +101,6 @@
     </div>
   </div>
 
-  <!-- Additional Styles for Instagram-like Features -->
   <style>
     .header-actions {
       display: flex;
@@ -177,7 +146,6 @@
       transform: scale(1.05);
     }
     
-    /* Typing Indicator */
     .typing-indicator {
       display: none;
       padding: 12px 16px;
@@ -190,10 +158,28 @@
       0%, 100% { opacity: 0.6; }
       50% { opacity: 1; }
     }
+    
+    .online-status {
+      width: 12px;
+      height: 12px;
+      background: #4CAF50;
+      border: 2px solid var(--pinterest-white);
+      border-radius: 50%;
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+    }
+    
+    .header-user-info {
+      position: relative;
+    }
+    
+    .header-avatar {
+      position: relative;
+    }
   </style>
 
   <script>
-    // Socket.io connection
     const socket = io();
     const messagesContainer = document.getElementById('messagesContainer');
     const messageForm = document.querySelector('.message-form');
@@ -203,15 +189,15 @@
     const otherUserId = '<%= otherUser._id %>';
     
     // Join the chat room
-    socket.emit('joinChat', {
-      senderId: currentUserId,
-      receiverId: otherUserId
+    socket.emit('join-chat', {
+      currentUserId: currentUserId,
+      otherUserId: otherUserId
     });
     
     // Listen for new messages
-    socket.on('chatMessage', function(data) {
-      if ((data.senderId === otherUserId && data.receiverId === currentUserId) ||
-          (data.senderId === currentUserId && data.receiverId === otherUserId)) {
+    socket.on('new-message', function(data) {
+      if ((data.sender === otherUserId && data.receiver === currentUserId) ||
+          (data.sender === currentUserId && data.receiver === otherUserId)) {
         addMessageToChat(data);
         scrollToBottom();
       }
@@ -220,12 +206,20 @@
     // Add message to chat UI
     function addMessageToChat(messageData) {
       const messageDiv = document.createElement('div');
-      const isSent = messageData.senderId === currentUserId;
+      const isSent = messageData.sender === currentUserId;
       
       messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
       
+      const avatarSrc = isSent ? 
+        ('<%= currentUser.dp || "/images/default-avatar.svg" %>') : 
+        ('<%= otherUser.dp || "/images/default-avatar.svg" %>');
+      
+      const username = isSent ? 
+        ('<%= currentUser.username %>') : 
+        ('<%= otherUser.username %>');
+      
       messageDiv.innerHTML = `
-        ${!isSent ? `<div class="message-avatar avatar-emoji">👤</div>` : ''}
+        ${!isSent ? `<img src="${avatarSrc}" alt="${username}" class="message-avatar">` : ''}
         <div class="message-content">
           <div class="message-bubble">
             ${messageData.text}
@@ -238,7 +232,7 @@
             })}
           </div>
         </div>
-        ${isSent ? `<div class="message-avatar avatar-emoji">👤</div>` : ''}
+        ${isSent ? `<img src="${avatarSrc}" alt="${username}" class="message-avatar">` : ''}
       `;
       
       messagesContainer.appendChild(messageDiv);
@@ -256,9 +250,9 @@
       
       if (messageText) {
         // Emit message via socket for real-time delivery
-        socket.emit('chatMessage', {
-          senderId: currentUserId,
-          receiverId: otherUserId,
+        socket.emit('send-message', {
+          sender: currentUserId,
+          receiver: otherUserId,
           text: messageText
         });
         
@@ -288,21 +282,57 @@
     document.addEventListener('DOMContentLoaded', function() {
       messageInput.focus();
       scrollToBottom();
+      
+      // Add online status (simulated)
+      const headerAvatar = document.querySelector('.header-avatar');
+      if (headerAvatar) {
+        const onlineStatus = document.createElement('div');
+        onlineStatus.className = 'online-status';
+        headerAvatar.parentElement.appendChild(onlineStatus);
+      }
     });
     
-    // Handle header actions
-    document.querySelectorAll('.header-action-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const title = this.getAttribute('title');
-        if (title === 'Video call') {
-          alert('Video call feature coming soon!');
-        } else if (title === 'Voice call') {
-          alert('Voice call feature coming soon!');
-        } else if (title === 'More options') {
-          alert('More options coming soon!');
-        }
-      });
+    // Typing indicator
+    let typingTimer;
+    messageInput.addEventListener('input', function() {
+      socket.emit('typing-start', { userId: currentUserId, chatWith: otherUserId });
+      
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => {
+        socket.emit('typing-stop', { userId: currentUserId, chatWith: otherUserId });
+      }, 1000);
     });
+    
+    socket.on('user-typing', function(data) {
+      if (data.userId === otherUserId) {
+        showTypingIndicator();
+      }
+    });
+    
+    socket.on('user-stopped-typing', function(data) {
+      if (data.userId === otherUserId) {
+        hideTypingIndicator();
+      }
+    });
+    
+    function showTypingIndicator() {
+      let indicator = document.querySelector('.typing-indicator');
+      if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.className = 'typing-indicator';
+        indicator.innerHTML = '<%= otherUser.fullname || otherUser.username %> is typing...';
+        messagesContainer.appendChild(indicator);
+      }
+      indicator.style.display = 'block';
+      scrollToBottom();
+    }
+    
+    function hideTypingIndicator() {
+      const indicator = document.querySelector('.typing-indicator');
+      if (indicator) {
+        indicator.style.display = 'none';
+      }
+    }
   </script>
 </body>
 </html>

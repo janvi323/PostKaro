@@ -9,26 +9,26 @@ function isLoggedIn(req, res, next) {
   res.redirect('/login');
 }
 
-// Feed Page - both root and /feed
+// Home Page - Pinterest-style landing page
 router.get('/', isLoggedIn, async (req, res) => {
   try {
-    const limit = 20; // Initial load limit
+    const limit = 24; // Optimized initial load for infinite scroll
     const posts = await Post.find()
       .populate("user", "username fullname dp")
       .sort({ createdAt: -1 })
       .limit(limit);
 
-    res.render("feed", { posts, user: req.user });
+    res.render("home", { posts, user: req.user });
   } catch (err) {
-    console.error("Feed error:", err);
-    res.status(500).send("Error loading feed");
+    console.error("Home error:", err);
+    res.status(500).send("Error loading home");
   }
 });
 
 // Feed Page
 router.get('/feed', isLoggedIn, async (req, res) => {
   try {
-    const limit = 20; // Initial load limit
+    const limit = 24; // Optimized initial load for infinite scroll
     const posts = await Post.find()
       .populate("user", "username fullname dp")
       .sort({ createdAt: -1 })
@@ -44,10 +44,11 @@ router.get('/feed', isLoggedIn, async (req, res) => {
 // Explore Page - Pinterest style discover
 router.get('/explore', isLoggedIn, async (req, res) => {
   try {
+    const limit = 24; // Initial load limit for better infinite scroll
     const posts = await Post.find()
       .populate("user", "username fullname dp")
       .sort({ createdAt: -1 })
-      .limit(50); // Limit for better performance
+      .limit(limit);
 
     res.render("explore", { posts, user: req.user });
   } catch (err) {
@@ -139,6 +140,35 @@ router.get("/api/posts", isLoggedIn, async (req, res) => {
   } catch (err) {
     console.error("Posts API error:", err);
     res.status(500).json({ error: "Error loading posts" });
+  }
+});
+
+// API endpoint for explore infinite scroll pagination
+router.get("/api/explore", isLoggedIn, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 24;
+    const skip = (page - 1) * limit;
+
+    // For explore, we can add different sorting or filtering logic
+    const posts = await Post.find()
+      .populate("user", "username fullname dp")
+      .sort({ createdAt: -1 }) // Could be changed to sort by popularity, likes, etc.
+      .skip(skip)
+      .limit(limit);
+
+    const totalPosts = await Post.countDocuments();
+    const hasMore = skip + posts.length < totalPosts;
+
+    res.json({
+      posts,
+      hasMore,
+      currentPage: page,
+      totalPosts
+    });
+  } catch (err) {
+    console.error("Explore API error:", err);
+    res.status(500).json({ error: "Error loading explore posts" });
   }
 });
 

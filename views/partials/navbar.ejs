@@ -1,0 +1,43 @@
+  <!-- Pinterest-style Navbar -->
+  <nav class="navbar">
+    <div class="navbar-logo">
+      <a href="/"><i class="fab fa-pinterest"></i> PostKaro</a>
+    </div>
+   
+    <ul class="navbar-types">
+      <li><a href="/" class="<%= title === 'Home' ? 'active' : '' %>">Home</a></li>
+      <li><a href="/explore" class="<%= title === 'Explore' ? 'active' : '' %>">Explore</a></li>
+      <li><a href="/create" class="<%= title === 'Create' ? 'active' : '' %>">Create</a></li>
+    </ul>
+   
+    <div class="navbar-search">
+      <input type="text" placeholder="Search for ideas">
+      <i class="fas fa-search"></i>
+    </div>
+   
+    <ul class="navbar-actions">
+      <li class="navbar-icon-container">
+        <a href="/notifications" title="Notifications">
+          <i class="fas fa-bell"></i>
+          <% if (user && user.followRequests && user.followRequests.length > 0) { %>
+            <span class="notification-badge"><%= user.followRequests.length %></span>
+          <% } %>
+        </a>
+      </li>
+      <li class="navbar-icon-container">
+        <a href="/conversations" title="Messages">
+          <i class="fas fa-comment"></i>
+        </a>
+      </li>
+      <li class="navbar-icon-container">
+        <a href="/profile/<%= user ? user.username : '' %>" title="Profile">
+          <i class="fas fa-user"></i>
+        </a>
+      </li>
+      <li class="navbar-icon-container">
+        <a href="/logout" title="Logout">
+          <i class="fas fa-sign-out-alt"></i>
+        </a>
+      </li>
+    </ul>
+  </nav>

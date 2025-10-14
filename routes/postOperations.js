@@ -116,10 +116,15 @@ router.get('/profile', isLoggedIn, async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
       .populate("posts")
-      .populate("savedPosts");
+      .populate("savedPosts")
+      .populate("following", "username fullname dp")
+      .populate("followers", "username fullname dp")
+      .populate("followRequests", "username fullname dp");
   res.render("profile", { 
       user, 
-      currentUser: req.user 
+      currentUser: req.user,
+      isOwnProfile: true,
+      followStatus: 'self'
     });
   } catch (err) {
     console.error("Profile error:", err);
@@ -127,15 +132,118 @@ router.get('/profile', isLoggedIn, async (req, res) => {
   }
 });
 
+// Follow requests page
+router.get('/follow-requests', isLoggedIn, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .populate("followRequests", "username fullname dp");
+      
+    res.render("follow-requests", {
+      requests: user.followRequests,
+      currentUser: req.user
+    });
+  } catch (err) {
+    console.error("Follow requests error:", err);
+    res.status(500).send("Error loading follow requests");
+  }
+});
+
+// Find people page
+router.get('/find-people', isLoggedIn, (req, res) => {
+  res.render("find-people", {
+    currentUser: req.user
+  });
+});
+
+// Account settings page
+router.get('/account-settings', isLoggedIn, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    res.render("account-settings", {
+      user,
+      currentUser: req.user
+    });
+  } catch (err) {
+    console.error("Settings error:", err);
+    res.status(500).send("Error loading settings");
+  }
+});
+
+// Update privacy settings
+router.post('/update-privacy', isLoggedIn, async (req, res) => {
+  try {
+    const { isPrivate, bio, website } = req.body;
+    
+    await User.findByIdAndUpdate(req.user._id, {
+      isPrivate: isPrivate === 'on',
+      bio: bio || '',
+      website: website || ''
+    });
+
+    req.flash('success', 'Settings updated successfully!');
+    res.redirect('/profile');
+  } catch (err) {
+    console.error("Update settings error:", err);
+    req.flash('error', 'Error updating settings');
+    res.redirect('/account-settings');
+  }
+});
+
 // Profile by ID
 router.get("/profile/:id", async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).populate("posts");
+    const user = await User.findById(req.params.id)
+      .populate("posts")
+      .populate("following", "username fullname dp")
+      .populate("followers", "username fullname dp");
+      
     if (!user) return res.status(404).send("User not found");
+
+    let followStatus = 'not_following';
+    let canMessage = false;
+    let canViewPosts = true; // Default for public accounts
+    
+    if (req.user) {
+      const currentUser = await User.findById(req.user._id);
+      
+      if (currentUser._id.toString() === user._id.toString()) {
+        followStatus = 'self';
+        canMessage = false; // Can't message yourself
+        canViewPosts = true;
+      } else if (currentUser.following.includes(user._id)) {
+        followStatus = 'following';
+        canMessage = true; // Can message if following
+        canViewPosts = true; // Can view posts if following
+      } else if (currentUser.sentRequests.includes(user._id)) {
+        followStatus = 'requested';
+        canMessage = false; // Can't message until accepted
+        // For private accounts, can't view posts until follow is accepted
+        canViewPosts = !user.isPrivate;
+      } else {
+        followStatus = 'not_following';
+        // Public accounts: can message and view posts
+        // Private accounts: need to follow first
+        if (user.isPrivate) {
+          canMessage = false;
+          canViewPosts = false; // Hide posts for private accounts
+        } else {
+          canMessage = true; // Public accounts allow messaging
+          canViewPosts = true;
+        }
+      }
+    } else {
+      // Not logged in
+      canMessage = false;
+      canViewPosts = !user.isPrivate; // Only public account posts visible
+    }
 
     res.render("profile", {
       user,
-      currentUser: req.user || null, // <-- Pass logged-in user
+      currentUser: req.user || null,
+      isOwnProfile: req.user && req.user._id.toString() === user._id.toString(),
+      followStatus,
+      canMessage,
+      canViewPosts
     });
   } catch (err) {
     console.error(err);
