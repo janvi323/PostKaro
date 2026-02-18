@@ -1,0 +1,62 @@
+# ============================
+# PostKaro .gitignore
+# ============================
+
+# ---------- Environment / Secrets ----------
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+
+# ---------- Dependencies ----------
+node_modules/
+**/node_modules/
+
+# ---------- Build output ----------
+frontend/dist/
+frontend/build/
+backend/dist/
+
+# ---------- Logs ----------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ---------- OS files ----------
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# ---------- IDE / Editor ----------
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ---------- Uploads (user-generated content) ----------
+backend/public/images/uploads/*
+backend/public/images/dp/*
+backend/public/audios/uploads/*
+!backend/public/images/uploads/.gitkeep
+!backend/public/images/dp/.gitkeep
+!backend/public/audios/uploads/.gitkeep
+# Keep the default avatar
+!backend/public/images/dp/default-avatar.svg
+
+# ---------- Misc ----------
+*.tgz
+.cache
+.parcel-cache
+coverage/
+.nyc_output/
+*.pid
+*.seed
+*.pid.lock
+
