@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - PostKaro Activity Logs</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .admin-header {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .admin-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .admin-nav {
+            background: #34495e;
+            padding: 0.5rem 2rem;
+        }
+
+        .admin-nav a {
+            color: #bdc3c7;
+            text-decoration: none;
+            margin-right: 2rem;
+            padding: 0.5rem 0;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .admin-nav a:hover,
+        .admin-nav a.active {
+            color: white;
+            border-bottom-color: #3498db;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #3498db;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card p {
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .activities-section,
+        .analytics-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: #ecf0f1;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #bdc3c7;
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            color: #2c3e50;
+        }
+
+        .activities-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #ecf0f1;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .activity-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-description {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-meta {
+            font-size: 0.875rem;
+            color: #7f8c8d;
+        }
+
+        .activity-timestamp {
+            font-size: 0.8rem;
+            color: #95a5a6;
+            margin-top: 0.25rem;
+        }
+
+        .activity-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .badge-like { background: #e8f5e8; color: #27ae60; }
+        .badge-comment { background: #e3f2fd; color: #2196f3; }
+        .badge-follow { background: #fff3e0; color: #ff9800; }
+        .badge-post { background: #fce4ec; color: #e91e63; }
+        .badge-login { background: #f3e5f5; color: #9c27b0; }
+
+        .chart-container {
+            padding: 1.5rem;
+        }
+
+        .top-users-list {
+            padding: 1.5rem;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .user-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #95a5a6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.875rem;
+            font-weight: bold;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .user-activity-count {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .pagination a {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .pagination a:hover,
+        .pagination a.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .filters {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filters select,
+        .filters input {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .filters button {
+            padding: 0.5rem 1rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .export-btn {
+            background: #27ae60;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-header">
+        <h1><i class="fas fa-chart-line"></i> PostKaro Admin Dashboard</h1>
+    </div>
+    
+    <div class="admin-nav">
+        <a href="/admin/dashboard" class="active">Dashboard</a>
+        <a href="/admin/users">Users</a>
+        <a href="/admin/posts">Posts</a>
+        <a href="/admin/activities">All Activities</a>
+        <a href="/admin/export/activities" class="export-btn">
+            <i class="fas fa-download"></i> Export Data
+        </a>
+    </div>
+
+    <div class="container">
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3><%= stats.totalActivities.toLocaleString() %></h3>
+                <p><i class="fas fa-activity"></i> Total Activities</p>
+            </div>
+            <div class="stat-card">
+                <h3><%= stats.totalUsers.toLocaleString() %></h3>
+                <p><i class="fas fa-users"></i> Total Users</p>
+            </div>
+            <div class="stat-card">
+                <h3><%= stats.totalPosts.toLocaleString() %></h3>
+                <p><i class="fas fa-images"></i> Total Posts</p>
+            </div>
+            <div class="stat-card">
+                <h3><%= stats.activityCounts.length %></h3>
+                <p><i class="fas fa-list"></i> Activity Types</p>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <label>
+                Action:
+                <select id="actionFilter">
+                    <option value="">All Actions</option>
+                    <% stats.activityCounts.forEach(item => { %>
+                        <option value="<%= item._id %>"><%= item._id.replace('_', ' ') %> (<%= item.count %>)</option>
+                    <% }); %>
+                </select>
+            </label>
+            <label>
+                Date Range:
+                <input type="date" id="startDate">
+                <input type="date" id="endDate">
+            </label>
+            <button onclick="applyFilters()">Apply Filters</button>
+            <a href="/admin/export/activities?format=csv" class="export-btn">
+                <i class="fas fa-file-csv"></i> Export CSV
+            </a>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Recent Activities -->
+            <div class="activities-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-clock"></i> Recent Activities</h2>
+                </div>
+                <div class="activities-list">
+                    <% activities.forEach(activity => { %>
+                        <div class="activity-item">
+                            <div class="activity-avatar">
+                                <% if (activity.actor && activity.actor.dp) { %>
+                                    <img src="<%= activity.actor.dp %>" alt="<%= activity.actor.username %>">
+                                <% } else { %>
+                                    <%= activity.actor ? activity.actor.username.charAt(0).toUpperCase() : 'U' %>
+                                <% } %>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-description">
+                                    <strong><%= activity.actor ? activity.actor.username : 'Unknown User' %></strong>
+                                    <%= activity.actionDescription %>
+                                    <span class="activity-badge badge-<%= activity.action.split('_')[0] %>">
+                                        <%= activity.action %>
+                                    </span>
+                                </div>
+                                <div class="activity-meta">
+                                    <% if (activity.details && activity.details.ipAddress) { %>
+                                        IP: <%= activity.details.ipAddress %> |
+                                    <% } %>
+                                    <% if (activity.context && activity.context.deviceType) { %>
+                                        Device: <%= activity.context.deviceType %>
+                                    <% } %>
+                                </div>
+                                <div class="activity-timestamp">
+                                    <%= new Date(activity.timestamp).toLocaleString() %>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+
+            <!-- Analytics Sidebar -->
+            <div class="analytics-section">
+                <!-- Activity Distribution -->
+                <div class="section-header">
+                    <h2><i class="fas fa-chart-pie"></i> Activity Distribution</h2>
+                </div>
+                <div class="chart-container">
+                    <% stats.activityCounts.slice(0, 8).forEach(item => { %>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                            <span style="font-size: 0.875rem;"><%= item._id.replace('_', ' ') %></span>
+                            <span style="font-weight: bold; color: #3498db;"><%= item.count %></span>
+                        </div>
+                    <% }); %>
+                </div>
+
+                <!-- Top Active Users -->
+                <div class="section-header">
+                    <h2><i class="fas fa-trophy"></i> Most Active Users</h2>
+                </div>
+                <div class="top-users-list">
+                    <% stats.topUsers.slice(0, 10).forEach(item => { %>
+                        <div class="user-item">
+                            <div class="user-avatar">
+                                <% if (item.user.dp) { %>
+                                    <img src="<%= item.user.dp %>" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                <% } else { %>
+                                    <%= item.user.username.charAt(0).toUpperCase() %>
+                                <% } %>
+                            </div>
+                            <div class="user-info">
+                                <div class="user-name">
+                                    <a href="/admin/user/<%= item.user._id %>/activities" style="text-decoration: none; color: inherit;">
+                                        <%= item.user.username %>
+                                    </a>
+                                </div>
+                                <div class="user-activity-count"><%= item.activityCount %> activities</div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <% if (pagination.totalPages > 1) { %>
+            <div class="pagination">
+                <% if (pagination.hasPrev) { %>
+                    <a href="?page=<%= pagination.currentPage - 1 %>">← Previous</a>
+                <% } %>
+                
+                <% for (let i = Math.max(1, pagination.currentPage - 2); i <= Math.min(pagination.totalPages, pagination.currentPage + 2); i++) { %>
+                    <a href="?page=<%= i %>" class="<%= i === pagination.currentPage ? 'active' : '' %>"><%= i %></a>
+                <% } %>
+                
+                <% if (pagination.hasNext) { %>
+                    <a href="?page=<%= pagination.currentPage + 1 %>">Next →</a>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+
+    <script>
+        function applyFilters() {
+            const action = document.getElementById('actionFilter').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            let url = '/admin/dashboard?';
+            const params = new URLSearchParams();
+            
+            if (action) params.append('action', action);
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+            
+            window.location.href = url + params.toString();
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            if (!document.hidden) {
+                window.location.reload();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

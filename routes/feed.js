@@ -183,13 +183,13 @@ router.get("/notification-counts", isLoggedIn, async (req, res) => {
       seen: false
     });
 
-    // For now, we'll simulate other notifications
-    // You can replace this with actual notification logic
-    const notifications = Math.floor(Math.random() * 5) + 1; // Random 1-5
+    // Get actual follow request notifications
+    const user = await User.findById(req.user._id).select('followRequests');
+    const followRequestsCount = user ? (user.followRequests ? user.followRequests.length : 0) : 0;
 
     res.json({
-      messages: unreadMessages,
-      notifications: notifications
+      messages: unreadMessages || 0,
+      notifications: followRequestsCount || 0
     });
   } catch (err) {
     console.error("Notification counts error:", err);

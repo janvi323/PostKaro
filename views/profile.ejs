@@ -89,6 +89,19 @@
 
       <div class="profile-actions">
         <% if (isOwnProfile) { %>
+          <!-- Privacy Status & Quick Toggle -->
+          <div class="privacy-status">
+            <span class="privacy-indicator <%= user.isPrivate ? 'private' : 'public' %>">
+              <i class="fa-solid fa-<%= user.isPrivate ? 'lock' : 'globe' %>"></i>
+              <%= user.isPrivate ? 'Private' : 'Public' %> Account
+            </span>
+            <button id="privacyToggleBtn" class="profile-btn privacy-btn <%= user.isPrivate ? 'make-public' : 'make-private' %>" 
+                    data-current-privacy="<%= user.isPrivate ? 'private' : 'public' %>">
+              <i class="fa-solid fa-<%= user.isPrivate ? 'globe' : 'lock' %>"></i>
+              Make <%= user.isPrivate ? 'Public' : 'Private' %>
+            </button>
+          </div>
+
           <!-- Follow Requests Button (only if there are pending requests) -->
           <% if (user.followRequests && user.followRequests.length > 0) { %>
             <a href="/follow-requests" class="profile-btn requests-btn">
@@ -709,6 +722,50 @@
           showToast('Profile link copied to clipboard!');
         });
       }
+    }
+
+    // Privacy toggle functionality
+    const privacyToggleBtn = document.getElementById('privacyToggleBtn');
+    if (privacyToggleBtn) {
+      privacyToggleBtn.addEventListener('click', function() {
+        const currentPrivacy = this.getAttribute('data-current-privacy');
+        const newPrivacy = currentPrivacy === 'private' ? 'public' : 'private';
+        
+        const confirmMessage = newPrivacy === 'private' 
+          ? 'Make your account private?\n\n• Only approved followers can see your posts\n• New followers need your approval\n• Only followers can message you'
+          : 'Make your account public?\n\n• Anyone can see your posts\n• Anyone can follow you\n• Anyone can message you';
+        
+        if (confirm(confirmMessage)) {
+          // Show loading state
+          this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+          this.disabled = true;
+          
+          // Send request to update privacy
+          fetch('/update-privacy', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `isPrivate=${newPrivacy === 'private' ? 'on' : ''}`
+          })
+          .then(response => {
+            if (response.ok) {
+              // Reload page to reflect changes
+              window.location.reload();
+            } else {
+              throw new Error('Failed to update privacy settings');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            showToast('Error updating privacy settings', 'error');
+            
+            // Reset button
+            this.disabled = false;
+            this.innerHTML = `<i class="fa-solid fa-${currentPrivacy === 'private' ? 'globe' : 'lock'}"></i> Make ${currentPrivacy === 'private' ? 'Public' : 'Private'}`;
+          });
+        }
+      });
     }
   </script>
 </body>

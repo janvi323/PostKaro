@@ -1,7 +1,14 @@
 const express = require('express');
 const User = require('../models/users.js');
 const Message = require('../models/Message.js');
+const Activity = require('../models/Activity.js');
 const router = express.Router();
+
+// Helper function to get client info
+const getClientInfo = (req) => ({
+  ipAddress: req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown',
+  userAgent: req.get('User-Agent') || 'unknown'
+});
 
 // Middleware to check if user is logged in
 function isLoggedIn(req, res, next) {
@@ -14,6 +21,7 @@ router.post('/follow/:userId', isLoggedIn, async (req, res) => {
   try {
     const currentUser = req.user;
     const targetUserId = req.params.userId;
+    const { ipAddress, userAgent } = getClientInfo(req);
     
     // Don't allow following yourself
     if (currentUser._id.toString() === targetUserId) {
@@ -43,6 +51,20 @@ router.post('/follow/:userId', isLoggedIn, async (req, res) => {
       
       await User.findByIdAndUpdate(targetUserId, {
         $addToSet: { followRequests: currentUser._id }
+      });
+
+      // Log follow request activity
+      await Activity.create({
+        actor: currentUser._id,
+        action: 'send_follow_request',
+        target: targetUserId,
+        targetModel: 'User',
+        details: { 
+          targetUsername: targetUser.username,
+          isPrivateAccount: true,
+          ipAddress 
+        },
+        context: { userAgent, deviceType: Activity.getDeviceType(userAgent) }
       });
 
       res.json({ 

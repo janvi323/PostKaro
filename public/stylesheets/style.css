@@ -7,6 +7,16 @@
   box-sizing: border-box;
 }
 
+/* Universal navbar sticky fix */
+.navbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1000 !important;
+  background: white !important;
+  border-bottom: 1px solid #e1e1e1 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
 body {
   background: #f8f8f8;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;

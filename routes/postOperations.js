@@ -1,6 +1,7 @@
 const express = require('express');
 const User = require('../models/users.js');
 const Post = require('../models/posts.js');
+const Activity = require('../models/Activity.js');
 const upload = require('../controllers/multer.js');
 
 const router = express.Router();
@@ -13,6 +14,295 @@ function isLoggedIn(req, res, next) {
 
 // Helper
 const toPublicUrl = (p) => "/" + p.replace(/^public[\\/]/, "").replace(/\\/g, "/");
+
+// Helper function to get client info
+const getClientInfo = (req) => ({
+  ipAddress: req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown',
+  userAgent: req.get('User-Agent') || 'unknown'
+});
+
+// ================== POST INTERACTION ROUTES ==================
+
+// Like a post
+router.post('/post/:id/like', isLoggedIn, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    const { ipAddress, userAgent } = getClientInfo(req);
+    const userId = req.user._id;
+
+    // Add like using the enhanced method
+    const liked = post.addLike(userId, ipAddress, userAgent);
+    
+    if (liked) {
+      await post.save();
+      
+      // Log activity
+      await Activity.logLike(userId, post._id, userAgent, ipAddress);
+      
+      res.json({ 
+        success: true, 
+        message: 'Post liked',
+        likesCount: post.likesCount 
+      });
+    } else {
+      res.json({ 
+        success: false, 
+        message: 'Already liked',
+        likesCount: post.likesCount 
+      });
+    }
+  } catch (err) {
+    console.error('Like error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Unlike a post
+router.post('/post/:id/unlike', isLoggedIn, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    const { ipAddress, userAgent } = getClientInfo(req);
+    const userId = req.user._id;
+
+    // Remove like using the enhanced method
+    const unliked = post.removeLike(userId);
+    
+    if (unliked) {
+      await post.save();
+      
+      // Log activity
+      await Activity.create({
+        actor: userId,
+        action: 'unlike_post',
+        target: post._id,
+        targetModel: 'Post',
+        details: { ipAddress },
+        context: { userAgent, deviceType: Activity.getDeviceType(userAgent) }
+      });
+      
+      res.json({ 
+        success: true, 
+        message: 'Post unliked',
+        likesCount: post.likesCount 
+      });
+    } else {
+      res.json({ 
+        success: false, 
+        message: 'Not liked yet',
+        likesCount: post.likesCount 
+      });
+    }
+  } catch (err) {
+    console.error('Unlike error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Add comment to post
+router.post('/post/:id/comment', isLoggedIn, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    const { text } = req.body;
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({ success: false, message: 'Comment text required' });
+    }
+
+    const { ipAddress, userAgent } = getClientInfo(req);
+    const userId = req.user._id;
+
+    // Add comment using the enhanced method
+    const comment = post.addComment(userId, text.trim(), ipAddress, userAgent);
+    await post.save();
+    
+    // Populate the comment user info for response
+    await post.populate('comments.user', 'username fullname dp');
+    
+    // Log activity
+    await Activity.logComment(userId, post._id, text.trim(), comment._id, userAgent, ipAddress);
+    
+    res.json({ 
+      success: true, 
+      message: 'Comment added',
+      comment: {
+        _id: comment._id,
+        text: comment.text,
+        user: comment.user,
+        createdAt: comment.createdAt
+      },
+      commentsCount: post.commentsCount 
+    });
+  } catch (err) {
+    console.error('Comment error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Delete comment
+router.delete('/post/:postId/comment/:commentId', isLoggedIn, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.postId);
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    const comment = post.comments.id(req.params.commentId);
+    if (!comment) return res.status(404).json({ success: false, message: 'Comment not found' });
+
+    // Check if user owns the comment or the post
+    if (!comment.user.equals(req.user._id) && !post.user.equals(req.user._id)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const { ipAddress, userAgent } = getClientInfo(req);
+    
+    // Remove comment
+    comment.remove();
+    await post.save();
+    
+    // Log activity
+    await Activity.create({
+      actor: req.user._id,
+      action: 'delete_comment',
+      target: post._id,
+      targetModel: 'Post',
+      details: { 
+        commentId: req.params.commentId,
+        commentText: comment.text,
+        ipAddress 
+      },
+      context: { userAgent, deviceType: Activity.getDeviceType(userAgent) }
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Comment deleted',
+      commentsCount: post.commentsCount 
+    });
+  } catch (err) {
+    console.error('Delete comment error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Track post view
+router.post('/post/:id/view', isLoggedIn, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    const { ipAddress, userAgent } = getClientInfo(req);
+    const { duration = 0 } = req.body;
+    const userId = req.user._id;
+
+    // Add view using the enhanced method
+    const viewAdded = post.addView(userId, ipAddress, userAgent, duration);
+    
+    if (viewAdded) {
+      await post.save();
+      
+      // Log activity
+      await Activity.create({
+        actor: userId,
+        action: 'view_post',
+        target: post._id,
+        targetModel: 'Post',
+        details: { 
+          viewDuration: duration,
+          ipAddress 
+        },
+        context: { userAgent, deviceType: Activity.getDeviceType(userAgent) }
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      viewsCount: post.viewsCount 
+    });
+  } catch (err) {
+    console.error('View tracking error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Share post
+router.post('/post/:id/share', isLoggedIn, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    const { platform = 'copy_link' } = req.body;
+    const { ipAddress, userAgent } = getClientInfo(req);
+    const userId = req.user._id;
+
+    // Add share
+    post.shares.push({
+      user: userId,
+      sharedAt: new Date(),
+      platform,
+      ipAddress
+    });
+    
+    await post.save();
+    
+    // Log activity
+    await Activity.create({
+      actor: userId,
+      action: 'share_post',
+      target: post._id,
+      targetModel: 'Post',
+      details: { 
+        platform,
+        ipAddress 
+      },
+      context: { userAgent, deviceType: Activity.getDeviceType(userAgent) }
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Post shared',
+      sharesCount: post.sharesCount 
+    });
+  } catch (err) {
+    console.error('Share error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Get post analytics
+router.get('/post/:id/analytics', isLoggedIn, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id).populate('user', 'username');
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    // Check if user owns the post
+    if (!post.user._id.equals(req.user._id)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const stats = post.getEngagementStats();
+    
+    res.json({ 
+      success: true, 
+      analytics: {
+        ...stats,
+        post: {
+          id: post._id,
+          caption: post.caption,
+          createdAt: post.createdAt
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Analytics error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// ================== EXISTING ROUTES ==================
 
 // Upload Post
 router.post("/upload", isLoggedIn, upload.fields([{ name: "file", maxCount: 1 }, { name: "voice", maxCount: 1 }]),
@@ -31,6 +321,7 @@ router.post("/upload", isLoggedIn, upload.fields([{ name: "file", maxCount: 1 },
       else return res.status(400).send("Invalid media file");
 
       const voice = req.files?.voice?.[0] || null;
+      const { ipAddress, userAgent } = getClientInfo(req);
 
       const post = new Post({
         fileUrl: toPublicUrl(media.path),
@@ -38,10 +329,31 @@ router.post("/upload", isLoggedIn, upload.fields([{ name: "file", maxCount: 1 },
         caption,
         voiceUrl: voice ? toPublicUrl(voice.path) : undefined,
         user: req.user._id,
+        metadata: {
+          originalFileName: media.originalname,
+          fileSize: media.size,
+          uploadedFrom: Activity.getDeviceType(userAgent)
+        }
       });
 
       await post.save();
       await User.findByIdAndUpdate(req.user._id, { $push: { posts: post._id } });
+
+      // Log activity
+      await Activity.create({
+        actor: req.user._id,
+        action: 'create_post',
+        target: post._id,
+        targetModel: 'Post',
+        details: {
+          postCaption: caption,
+          postType: fileType,
+          fileSize: media.size,
+          hasVoice: !!voice,
+          ipAddress
+        },
+        context: { userAgent, deviceType: Activity.getDeviceType(userAgent) }
+      });
 
       res.redirect("/profile");
     } catch (err) {
@@ -120,7 +432,12 @@ router.get('/profile', isLoggedIn, async (req, res) => {
       .populate("following", "username fullname dp")
       .populate("followers", "username fullname dp")
       .populate("followRequests", "username fullname dp");
-  res.render("profile", { 
+      
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+      
+    res.render("profile", { 
       user, 
       currentUser: req.user,
       isOwnProfile: true,
@@ -173,12 +490,66 @@ router.get('/account-settings', isLoggedIn, async (req, res) => {
 router.post('/update-privacy', isLoggedIn, async (req, res) => {
   try {
     const { isPrivate, bio, website } = req.body;
+    const { ipAddress, userAgent } = getClientInfo(req);
     
-    await User.findByIdAndUpdate(req.user._id, {
+    // Get current user data for comparison
+    const currentUser = await User.findById(req.user._id);
+    if (!currentUser) {
+      req.flash('error', 'User not found');
+      return res.redirect('/account-settings');
+    }
+    
+    const oldValues = {
+      isPrivate: currentUser.isPrivate,
+      bio: currentUser.bio,
+      website: currentUser.website
+    };
+    
+    const newValues = {
       isPrivate: isPrivate === 'on',
       bio: bio || '',
       website: website || ''
-    });
+    };
+    
+    // Update user
+    await User.findByIdAndUpdate(req.user._id, newValues);
+
+    // Log activity for privacy changes
+    if (oldValues.isPrivate !== newValues.isPrivate) {
+      await Activity.create({
+        actor: req.user._id,
+        action: 'change_privacy',
+        target: req.user._id,
+        targetModel: 'User',
+        details: {
+          oldPrivacy: oldValues.isPrivate ? 'private' : 'public',
+          newPrivacy: newValues.isPrivate ? 'private' : 'public',
+          ipAddress
+        },
+        context: { userAgent, deviceType: Activity.getDeviceType(userAgent) }
+      });
+    }
+    
+    // Log profile update activity
+    const changedFields = [];
+    if (oldValues.bio !== newValues.bio) changedFields.push('bio');
+    if (oldValues.website !== newValues.website) changedFields.push('website');
+    
+    if (changedFields.length > 0) {
+      await Activity.create({
+        actor: req.user._id,
+        action: 'update_profile',
+        target: req.user._id,
+        targetModel: 'User',
+        details: {
+          changedFields,
+          oldValues: Object.fromEntries(changedFields.map(field => [field, oldValues[field]])),
+          newValues: Object.fromEntries(changedFields.map(field => [field, newValues[field]])),
+          ipAddress
+        },
+        context: { userAgent, deviceType: Activity.getDeviceType(userAgent) }
+      });
+    }
 
     req.flash('success', 'Settings updated successfully!');
     res.redirect('/profile');

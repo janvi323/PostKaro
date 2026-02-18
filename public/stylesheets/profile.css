@@ -283,6 +283,58 @@ body {
   flex-wrap: wrap;
 }
 
+/* Privacy Status Section */
+.privacy-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e1e1e1;
+}
+
+.privacy-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.privacy-indicator.private {
+  color: #e60023;
+}
+
+.privacy-indicator.public {
+  color: #5cb85c;
+}
+
+.privacy-indicator i {
+  font-size: 12px;
+}
+
+.privacy-btn {
+  background: #6c757d !important;
+  color: white !important;
+  font-size: 12px !important;
+  padding: 6px 12px !important;
+}
+
+.privacy-btn.make-private {
+  background: #e60023 !important;
+}
+
+.privacy-btn.make-public {
+  background: #5cb85c !important;
+}
+
+.privacy-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
 .profile-btn {
   padding: 8px 16px;
   border-radius: 24px;

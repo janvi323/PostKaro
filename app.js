@@ -10,6 +10,7 @@ const MongoStore = require("connect-mongo");
 const http = require("http");
 const conversationsRoutes = require("./routes/conversations");
 const notificationsRouter = require('./routes/notifications');
+const adminRouter = require('./routes/admin');
 // Routers
 const feedRouter = require('./routes/feed');
 var indexRouter = require('./routes/index');
@@ -82,6 +83,7 @@ app.use('/chat', chatRoutes); // ✅ namespace chats
 app.use("/conversations", conversationsRoutes);
 app.use('/follow', followRouter); // Follow system routes
 app.use('/notifications', notificationsRouter); // Notifications routes
+app.use('/admin', adminRouter); // Admin dashboard routes
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));
