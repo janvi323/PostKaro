@@ -80,7 +80,7 @@ export default function Profile() {
       {/* Profile header with cover */}
       <div className="card overflow-hidden mb-8">
         {/* Gradient cover */}
-        <div className="h-36 bg-gradient-to-br from-strongPink via-softPink to-lightGreen relative">
+        <div className="h-36 bg-gradient-to-br from-primaryPink via-secondaryPink to-lightGreen relative">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRoLTJ2LTRoMnY0em0wLTZ2LTRoMnY0aC0yem0tNiA2di00aDJ2NGgtMnptMC02di00aDJ2NGgtMnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30" />
         </div>
 
@@ -88,7 +88,7 @@ export default function Profile() {
           <div className="flex flex-col sm:flex-row items-center gap-6">
             <div className="relative">
               <img src={dpUrl} alt={profile.username}
-                className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-premium ring-4 ring-softPink/30" />
+                className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-premium ring-4 ring-softIvory/40" />
               {!isOwnProfile && isOnline(profile._id) && (
                 <div className="absolute bottom-2 right-2 w-5 h-5 bg-primaryGreen rounded-full border-3 border-white shadow-glow-green" />
               )}
@@ -100,7 +100,7 @@ export default function Profile() {
               {profile.bio && <p className="text-gray-600 text-sm mb-3 max-w-lg">{profile.bio}</p>}
               {profile.website && (
                 <a href={profile.website} target="_blank" rel="noreferrer"
-                  className="text-primaryGreen text-sm font-medium hover:underline inline-flex items-center gap-1">
+                  className="text-brandGreen text-sm font-medium hover:underline inline-flex items-center gap-1">
                   {profile.website}
                 </a>
               )}
@@ -133,7 +133,7 @@ export default function Profile() {
                     followStatus === 'following'
                       ? 'bg-gray-200 text-gray-700 hover:bg-red-50 hover:text-red-500'
                       : followStatus === 'requested'
-                      ? 'bg-softPink text-gray-700'
+                      ? 'bg-softIvory/60 text-gray-700'
                       : 'btn-primary'
                   }`}>
                   {followStatus === 'following' ? 'Following' : followStatus === 'requested' ? 'Requested' : 'Follow'}
@@ -156,7 +156,7 @@ export default function Profile() {
             <button key={tab} onClick={() => setActiveTab(tab)}
               className={`flex-1 py-2 px-4 rounded-xl text-sm font-semibold transition-all duration-300 ${
                 activeTab === tab
-                  ? 'bg-strongPink text-white shadow-md'
+                  ? 'bg-primaryPink text-white shadow-md'
                   : 'text-gray-500 hover:bg-pink-50'
               }`}>
               {tab.charAt(0).toUpperCase() + tab.slice(1)}

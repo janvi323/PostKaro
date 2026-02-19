@@ -103,13 +103,13 @@ export default function ChatWidget() {
       {/* Floating button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-strongPink text-white rounded-full shadow-xl
+        className="fixed bottom-6 right-6 w-14 h-14 bg-primaryPink text-white rounded-full shadow-xl
                    hover:scale-110 transition-all duration-300 flex items-center justify-center z-40
                    hover:shadow-2xl active:scale-95"
       >
         {isOpen ? <HiX className="w-6 h-6" /> : <HiChat className="w-6 h-6" />}
         {!isOpen && unread > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-primaryGreen text-white text-xs
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-brandGreen text-white text-xs
                            rounded-full flex items-center justify-center font-bold">
             {unread > 9 ? '9+' : unread}
           </span>
@@ -124,7 +124,7 @@ export default function ChatWidget() {
           {!activeChat ? (
             // Conversation list
             <>
-              <div className="px-4 py-3 border-b border-pink-100 bg-gradient-to-r from-strongPink to-softPink">
+              <div className="px-4 py-3 border-b border-softIvory/40 bg-gradient-to-r from-primaryPink to-secondaryPink">
                 <h3 className="text-white font-bold">Messages</h3>
               </div>
               <div className="flex-1 overflow-y-auto">
@@ -137,11 +137,11 @@ export default function ChatWidget() {
                     <button
                       key={conv.otherUser._id}
                       onClick={() => openChat(conv.otherUser)}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-pink-50 transition-colors text-left"
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-mainBg/40 transition-colors text-left"
                     >
                       <div className="relative">
                         <img src={dpUrl(conv.otherUser.dp)} alt=""
-                          className="w-10 h-10 rounded-full object-cover border-2 border-pink-100" />
+                          className="w-10 h-10 rounded-full object-cover border-2 border-softIvory/40" />
                         {isOnline(conv.otherUser._id) && (
                           <div className="absolute bottom-0 right-0 w-3 h-3 bg-primaryGreen rounded-full border-2 border-white" />
                         )}
@@ -151,7 +151,7 @@ export default function ChatWidget() {
                         <p className="text-xs text-gray-400 truncate">{conv.lastMessage?.text}</p>
                       </div>
                       {conv.unreadCount > 0 && (
-                        <span className="w-5 h-5 bg-strongPink text-white text-xs rounded-full flex items-center justify-center font-bold">
+                        <span className="w-5 h-5 bg-primaryPink text-white text-xs rounded-full flex items-center justify-center font-bold">
                           {conv.unreadCount}
                         </span>
                       )}
@@ -163,7 +163,7 @@ export default function ChatWidget() {
           ) : (
             // Active chat
             <>
-              <div className="px-4 py-3 border-b border-pink-100 flex items-center gap-3 bg-gradient-to-r from-strongPink to-softPink">
+              <div className="px-4 py-3 border-b border-softIvory/40 flex items-center gap-3 bg-gradient-to-r from-primaryPink to-secondaryPink">
                 <button onClick={() => setActiveChat(null)}
                   className="text-white hover:bg-white/20 p-1 rounded-lg transition-colors text-sm">
                   ←
@@ -200,7 +200,7 @@ export default function ChatWidget() {
                         <div
                           className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm ${
                             isMine
-                              ? 'bg-strongPink text-white rounded-br-md'
+                              ? 'bg-primaryPink text-white rounded-br-md'
                               : 'bg-white text-gray-700 rounded-bl-md shadow-sm'
                           }`}
                         >
@@ -219,11 +219,11 @@ export default function ChatWidget() {
                   placeholder="Type a message..."
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  className="flex-1 px-4 py-2.5 rounded-2xl bg-pink-50 border border-pink-100 text-sm
-                             focus:outline-none focus:border-strongPink transition-colors"
+                  className="flex-1 px-4 py-2.5 rounded-2xl bg-mainBg/40 border border-softIvory/40 text-sm
+                             focus:outline-none focus:border-primaryPink transition-colors"
                 />
                 <button type="submit"
-                  className="p-2.5 bg-strongPink text-white rounded-2xl hover:bg-pink-500 transition-colors
+                  className="p-2.5 bg-primaryPink text-white rounded-2xl hover:brightness-110 transition-all
                              active:scale-95">
                   <HiPaperAirplane className="w-4 h-4 rotate-90" />
                 </button>

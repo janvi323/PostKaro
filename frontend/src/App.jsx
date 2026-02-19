@@ -25,7 +25,7 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 function PageLoader() {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="w-10 h-10 border-4 border-softPink border-t-strongPink rounded-full animate-spin" />
+      <div className="w-10 h-10 border-4 border-softIvory border-t-primaryPink rounded-full animate-spin" />
     </div>
   );
 }
@@ -38,7 +38,7 @@ export default function App() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-mainBg">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-softPink border-t-strongPink rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-12 h-12 border-4 border-softIvory border-t-primaryPink rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-400 text-sm">Loading PostKaro...</p>
         </div>
       </div>
@@ -78,7 +78,18 @@ export default function App() {
 
       {isAuthenticated && <ChatWidget />}
       {isAuthenticated && showCreatePost && (
-        <CreatePostModal onClose={() => setShowCreatePost(false)} />
+        <CreatePostModal
+          onClose={() => setShowCreatePost(false)}
+          onCreated={(newPost) => {
+            setShowCreatePost(false);
+            // Broadcast to any mounted Feed/Explore page so they prepend the new post
+            // without requiring a full page reload. Uses the DOM event bus pattern to
+            // avoid prop-drilling through lazy-loaded routes.
+            window.dispatchEvent(
+              new CustomEvent('postkaro:postCreated', { detail: newPost })
+            );
+          }}
+        />
       )}
     </div>
   );

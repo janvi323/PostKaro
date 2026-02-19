@@ -21,9 +21,19 @@ export const feedService = {
 };
 
 export const postService = {
+  // Public list — no auth required; always works on page refresh.
+  // Use this in Feed/Home instead of feedService.getFeed when you need
+  // posts visible to unauthenticated visitors too.
+  getAll: (page = 1, limit = 20) => api.get(`/posts?page=${page}&limit=${limit}`),
+
   getPost: (id) => api.get(`/posts/${id}`),
   createPost: (formData) =>
     api.post('/posts/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+
+  // Create a post from an external URL (e.g. Pexels selection).
+  // No file upload required — the external URL is stored directly.
+  createFromUrl: (data) => api.post('/posts/from-url', data),
+
   deletePost: (id) => api.delete(`/posts/${id}`),
   editPost: (id, caption) => api.put(`/posts/${id}`, { caption }),
   likePost: (id) => api.post(`/posts/${id}/like`),
@@ -76,4 +86,26 @@ export const notificationService = {
 
 export const userService = {
   search: (query) => api.get(`/users/search?query=${encodeURIComponent(query)}`),
+};
+
+/**
+ * pexelsService — calls the backend proxy routes so the API key
+ * stays exclusively on the server. Never import from Pexels directly.
+ */
+export const pexelsService = {
+  /** Curated or searched photos */
+  getPhotos: (query = '', page = 1, perPage = 20) =>
+    api.get(`/pexels/photos?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`),
+
+  /** Popular or searched videos */
+  getVideos: (query = '', page = 1, perPage = 15) =>
+    api.get(`/pexels/videos?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`),
+};
+
+export const unsplashService = {
+  getInteractions: (id) => api.get(`/unsplash/${id}/interactions`),
+  toggleLike: (id, meta) => api.post(`/unsplash/${id}/like`, meta),
+  toggleSave: (id, meta) => api.post(`/unsplash/${id}/save`, meta),
+  addComment: (id, text, meta) => api.post(`/unsplash/${id}/comment`, { text, ...meta }),
+  deleteComment: (id, commentId) => api.delete(`/unsplash/${id}/comment/${commentId}`),
 };

@@ -28,20 +28,20 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-mainBg bg-pattern">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-mainBg to-softIvory/40 bg-pattern">
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-strongPink to-softPink rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-glow-pink animate-float">
+          <div className="w-16 h-16 bg-gradient-to-br from-primaryPink to-secondaryPink rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-glow-pink animate-float">
             <span className="text-white text-3xl font-bold">P</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-700">
-            Post<span className="text-strongPink">Karo</span>
+          <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
+            Post<span className="text-primaryPink">Karo</span>
           </h1>
           <p className="text-gray-400 mt-2 text-sm">Join the community</p>
         </div>
 
-        <div className="glass rounded-3xl p-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">Create Account</h2>
+        <div className="glass-modal rounded-3xl p-8 border border-softIvory/30 shadow-card-hover">
+          <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">Create Account ✨</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -71,7 +71,7 @@ export default function Register() {
 
           <p className="text-center text-sm text-gray-400 mt-6">
             Already have an account?{' '}
-            <Link to="/login" className="text-strongPink font-semibold hover:underline">
+            <Link to="/login" className="text-primaryPink font-semibold hover:underline">
               Sign In
             </Link>
           </p>

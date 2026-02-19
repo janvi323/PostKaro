@@ -18,17 +18,47 @@ connectDB();
 // Passport config
 require('./config/passport')(passport);
 
+// ==================== CORS ORIGINS ====================
+// Support comma-separated origins for multi-environment deployments.
+// e.g. CLIENT_URL="https://postkaro.vercel.app,https://www.postkaro.vercel.app"
+// Falls back to localhost:5173 for local development.
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, curl, SSR)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    console.warn(`[CORS] Blocked origin: ${origin}`);
+    callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
 // App
 const app = express();
 const server = http.createServer(app);
 
-// Socket.IO with CORS
+// Socket.IO with CORS — use a function so behaviour matches the Express cors
+// middleware: allow no-origin requests (Postman, SSR), block unknown origins.
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      console.warn(`[Socket.IO CORS] Blocked origin: ${origin}`);
+      callback(new Error(`Origin ${origin} not allowed`));
+    },
     methods: ['GET', 'POST'],
     credentials: true,
   },
+  // Generous timeouts reduce spurious disconnects during slow handshakes in dev
+  pingTimeout: 60000,
+  pingInterval: 25000,
 });
 
 // Socket controller
@@ -37,15 +67,9 @@ socketController(io);
 
 // ==================== MIDDLEWARE ====================
 
-// CORS
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-);
+// CORS — must come before routes
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // handle pre-flight for all routes
 
 // Body parsers
 app.use(logger('dev'));
@@ -66,6 +90,11 @@ app.use('/images/uploads', (req, res) => {
     <text x="200" y="140" text-anchor="middle" font-family="Arial" font-size="20" fill="#e91e63">Image not found</text>
     <text x="200" y="170" text-anchor="middle" font-family="Arial" font-size="14" fill="#f48fb1">Upload a new post!</text>
   </svg>`);
+});
+
+// Fallback: serve default-avatar.svg when a profile-picture file is missing
+app.use('/images/dp', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/images/dp/default-avatar.svg'));
 });
 
 // Session (needed for Passport Google OAuth flow)
@@ -98,6 +127,7 @@ const notificationRoutes = require('./routes/notifications');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/users');
 const unsplashRoutes = require('./routes/unsplash');
+const pexelsRoutes = require('./routes/pexels'); // Pexels photo + video proxy
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -110,6 +140,7 @@ app.use('/api/follow', followRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/unsplash', unsplashRoutes);
+app.use('/api/pexels', pexelsRoutes); // Pexels proxy — API key never reaches client
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -138,7 +169,41 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 PostKaro API running on http://localhost:${PORT}`);
   console.log(`📡 Socket.IO ready`);
-  console.log(`🌐 CORS enabled for ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
+  console.log(`🌐 CORS allowed origins: ${allowedOrigins.join(', ')}`);
+  console.log(`🛠️  Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// HTTP server error (e.g. EADDRINUSE)
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use. Kill the other process or change PORT in .env`);
+  } else {
+    console.error('❌ HTTP server error:', err);
+  }
+  process.exit(1);
+});
+
+// Socket.IO engine-level errors (transport errors, bad requests, etc.)
+io.engine.on('connection_error', (err) => {
+  console.error('[Socket.IO] Engine connection error:', {
+    code: err.code,
+    message: err.message,
+    context: err.context,
+  });
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received — closing server gracefully…');
+  server.close(() => {
+    console.log('HTTP server closed.');
+    process.exit(0);
+  });
+});
+
+// Catch unhandled promise rejections so they don't silently swallow errors
+process.on('unhandledRejection', (reason) => {
+  console.error('⚠️  Unhandled promise rejection:', reason);
 });
 
 module.exports = { app, server, io };

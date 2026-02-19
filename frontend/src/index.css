@@ -1,129 +1,165 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────
+   BASE
+   ───────────────────────────────────────────── */
 @layer base {
   body {
-    @apply bg-mainBg text-gray-700 transition-colors duration-300 antialiased;
+    @apply bg-mainBg text-gray-700 antialiased;
+    font-family: 'Poppins', 'Inter', system-ui, sans-serif;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
   ::selection {
-    @apply bg-strongPink/25 text-gray-800;
-  }
-  .dark body {
-    @apply bg-darkBg text-gray-100;
+    @apply bg-primaryPink/20 text-gray-800;
   }
 }
 
+/* ─────────────────────────────────────────────
+   COMPONENTS
+   ───────────────────────────────────────────── */
 @layer components {
+  /* ── Buttons ── */
   .btn-primary {
-    @apply bg-gradient-to-r from-strongPink to-pink-400 text-white px-6 py-2.5 rounded-2xl font-semibold
-           hover:from-pink-500 hover:to-strongPink transition-all duration-300
+    @apply bg-primaryPink text-white px-6 py-2.5 rounded-2xl font-semibold
+           hover:brightness-110 transition-all duration-300 ease-in-out
            shadow-md hover:shadow-glow-pink active:scale-[0.97];
   }
 
+  .btn-secondary {
+    @apply bg-secondaryPink text-white px-6 py-2.5 rounded-2xl font-semibold
+           hover:brightness-110 transition-all duration-300 ease-in-out
+           shadow-md active:scale-[0.97];
+  }
+
   .btn-green {
-    @apply bg-gradient-to-r from-primaryGreen to-lightGreen text-white px-6 py-2.5 rounded-2xl font-semibold
-           hover:from-green-600 hover:to-primaryGreen transition-all duration-300
+    @apply bg-brandGreen text-white px-6 py-2.5 rounded-2xl font-semibold
+           hover:brightness-110 transition-all duration-300 ease-in-out
            shadow-md hover:shadow-glow-green active:scale-[0.97];
   }
 
+  .btn-outline {
+    @apply border-2 border-lightGreen text-brandGreen bg-transparent px-6 py-2.5 rounded-2xl font-semibold
+           hover:bg-lightGreen/10 transition-all duration-300 ease-in-out active:scale-[0.97];
+  }
+
   .btn-soft {
-    @apply bg-softPink/40 text-gray-700 px-6 py-2.5 rounded-2xl font-semibold
-           hover:bg-softPink/70 transition-all duration-300 active:scale-[0.97]
+    @apply bg-softIvory/40 text-gray-700 px-6 py-2.5 rounded-2xl font-semibold
+           hover:bg-softIvory/70 transition-all duration-300 ease-in-out active:scale-[0.97]
            backdrop-blur-sm;
   }
 
+  /* ── Card ── */
   .card {
-    @apply bg-white/80 backdrop-blur-sm rounded-2xl shadow-card
-           hover:shadow-card-hover transition-all duration-300 border border-white/60;
+    @apply bg-white/90 backdrop-blur-sm rounded-2xl shadow-soft
+           hover:shadow-card-hover hover:scale-[1.02]
+           transition-all duration-300 ease-in-out border border-softIvory/40;
   }
 
-  .dark .card {
-    @apply bg-darkCard border-gray-700/50;
-  }
-
+  /* ── Glass ── */
   .glass {
-    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-glass;
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-soft;
   }
 
+  /* ── Inputs ── */
   .input-field {
-    @apply w-full px-4 py-3 rounded-2xl border border-pink-200/60 bg-white/60
+    @apply w-full px-4 py-3 rounded-xl border border-lightGreen/40 bg-white/70
            backdrop-blur-sm
-           focus:outline-none focus:ring-2 focus:ring-strongPink/30 focus:border-strongPink/60
-           focus:bg-white/90
-           transition-all duration-300 placeholder-gray-400;
+           focus:outline-none focus:ring-2 focus:ring-primaryPink/30 focus:border-primaryPink/60
+           focus:bg-white
+           transition-all duration-300 ease-in-out placeholder-gray-400 text-sm;
   }
 
-  .dark .input-field {
-    @apply bg-darkCard border-gray-600 text-gray-100;
-  }
-
+  /* ── Badge ── */
   .badge {
     @apply inline-flex items-center justify-center text-xs font-bold rounded-full
            min-w-[1.25rem] h-5 px-1;
   }
+
+  .badge-yellow {
+    @apply bg-accentYellow/20 text-accentYellow font-bold text-[10px] px-2 py-0.5 rounded-full;
+  }
 }
 
-/* Masonry grid */
+/* ─────────────────────────────────────────────
+   MASONRY GRID
+   ───────────────────────────────────────────── */
 .masonry-grid {
   column-count: 2;
-  column-gap: 1.5rem;
+  column-gap: 1.25rem;
 }
-
-@media (min-width: 640px) {
-  .masonry-grid { column-count: 3; }
-}
-@media (min-width: 768px) {
-  .masonry-grid { column-count: 4; }
-}
-@media (min-width: 1024px) {
-  .masonry-grid { column-count: 5; }
-}
+@media (min-width: 640px)  { .masonry-grid { column-count: 3; } }
+@media (min-width: 768px)  { .masonry-grid { column-count: 4; } }
+@media (min-width: 1024px) { .masonry-grid { column-count: 5; } }
 
 .masonry-item {
   break-inside: avoid;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
-/* Premium scrollbar */
+/* ─────────────────────────────────────────────
+   SCROLLBAR
+   ───────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #F6AFC6, #FF76A4);
+  background: linear-gradient(180deg, #F6AFCD, #E1005E);
   border-radius: 10px;
 }
-::-webkit-scrollbar-thumb:hover { background: #FF76A4; }
+::-webkit-scrollbar-thumb:hover { background: #E1005E; }
 
-/* Skeleton loading animation */
+/* ─────────────────────────────────────────────
+   SKELETON
+   ───────────────────────────────────────────── */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
+  0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
-
 .skeleton {
-  background: linear-gradient(90deg, #fce4ee 25%, #f6afc6 50%, #fce4ee 75%);
+  background: linear-gradient(90deg, #fce4ee 25%, #f6afcd 50%, #fce4ee 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 1rem;
 }
 
-/* Page transitions */
-.page-enter {
-  animation: fadeIn 0.3s ease-out;
-}
-
-/* Glassmorphism background pattern */
+/* ─────────────────────────────────────────────
+   BACKGROUND PATTERNS / AMBIENT
+   ───────────────────────────────────────────── */
 .bg-pattern {
   background-image:
-    radial-gradient(ellipse at 20% 50%, rgba(255,118,164,0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(86,170,62,0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 40% 80%, rgba(246,175,198,0.08) 0%, transparent 50%);
+    radial-gradient(ellipse at 15% 40%, rgba(225,0,94,0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 20%, rgba(86,170,62,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 85%, rgba(246,175,205,0.07) 0%, transparent 55%),
+    radial-gradient(ellipse at 70% 60%, rgba(245,198,56,0.03) 0%, transparent 45%);
 }
 
-/* Premium focus ring */
+/* ─────────────────────────────────────────────
+   PREMIUM FOCUS
+   ───────────────────────────────────────────── */
 *:focus-visible {
-  outline: 2px solid rgba(255,118,164,0.4);
+  outline: 2px solid rgba(225,0,94,0.35);
   outline-offset: 2px;
   border-radius: 0.5rem;
+}
+
+/* ─────────────────────────────────────────────
+   GLASS GRADIENT OVERLAY (modals)
+   ───────────────────────────────────────────── */
+.glass-modal {
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+}
+
+/* ─────────────────────────────────────────────
+   GRADIENT HELPERS
+   ───────────────────────────────────────────── */
+.gradient-pink {
+  background: linear-gradient(135deg, #FCE4EE 0%, #F6AFCD 100%);
+}
+.gradient-brand {
+  background: linear-gradient(135deg, #E1005E 0%, #FF76A4 100%);
 }

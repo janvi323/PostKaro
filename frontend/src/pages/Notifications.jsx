@@ -39,7 +39,7 @@ export default function Notifications() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
-        <FiUsers className="inline mr-2 text-strongPink" />
+        <FiUsers className="inline mr-2 text-primaryPink" />
         Follow Requests
       </h1>
 

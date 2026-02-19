@@ -120,11 +120,22 @@ export default function Explore() {
     setCombined((prev) => prev.filter((item) => !(item.type === 'post' && item.data._id === postId)));
   };
 
+  const handleBrokenPost = (postId) => {
+    setCombined((prev) => prev.filter((item) => !(item.type === 'post' && item.data._id === postId)));
+  };
+
+  const handleBrokenUnsplash = (unsplashId) => {
+    setCombined((prev) => prev.filter((item) => !(item.type === 'unsplash' && item.data.id === unsplashId)));
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">
-        Explore <span className="text-primaryGreen">PostKaro</span>
-      </h1>
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+          Explore <span className="text-brandGreen">PostKaro</span>
+        </h1>
+        <p className="text-sm text-gray-400 mt-0.5">Discover amazing content from the community</p>
+      </div>
 
       {loading ? (
         <div className="masonry-grid">
@@ -141,9 +152,16 @@ export default function Explore() {
           {combined.map((item, i) => (
             <div key={item.key} ref={i === combined.length - 1 ? lastItemRef : undefined}>
               {item.type === 'post' ? (
-                <PostCard post={item.data} onDelete={handleDelete} />
+                <PostCard
+                  post={item.data}
+                  onDelete={handleDelete}
+                  onBrokenImage={() => handleBrokenPost(item.data._id)}
+                />
               ) : (
-                <UnsplashCard photo={item.data} />
+                <UnsplashCard
+                  photo={item.data}
+                  onBrokenImage={() => handleBrokenUnsplash(item.data.id)}
+                />
               )}
             </div>
           ))}
@@ -153,8 +171,8 @@ export default function Explore() {
       {loadingMore && (
         <div className="flex justify-center py-8">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 border-3 border-primaryGreen/30 border-t-primaryGreen rounded-full animate-spin" />
-            <span className="text-sm text-gray-400 font-medium">Loading more...</span>
+            <div className="w-7 h-7 border-[3px] border-brandGreen/30 border-t-brandGreen rounded-full animate-spin" />
+            <span className="text-sm text-gray-400 font-medium">Loading more…</span>
           </div>
         </div>
       )}

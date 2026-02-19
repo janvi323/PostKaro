@@ -10,8 +10,21 @@ const router = express.Router();
 router.get('/me', authenticateJWT, async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
-      .populate({ path: 'posts', populate: { path: 'user', select: 'username fullname dp' } })
-      .populate('savedPosts')
+      .populate({
+        path: 'posts',
+        populate: [
+          { path: 'user', select: 'username fullname dp' },
+          { path: 'comments.user', select: 'username fullname dp' },
+        ],
+        options: { sort: { createdAt: -1 } },
+      })
+      .populate({
+        path: 'savedPosts',
+        populate: [
+          { path: 'user', select: 'username fullname dp' },
+          { path: 'comments.user', select: 'username fullname dp' },
+        ],
+      })
       .populate('following', 'username fullname dp')
       .populate('followers', 'username fullname dp')
       .populate('followRequests', 'username fullname dp')
@@ -28,7 +41,14 @@ router.get('/me', authenticateJWT, async (req, res) => {
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
-      .populate({ path: 'posts', populate: { path: 'user', select: 'username fullname dp' } })
+      .populate({
+        path: 'posts',
+        populate: [
+          { path: 'user', select: 'username fullname dp' },
+          { path: 'comments.user', select: 'username fullname dp' },
+        ],
+        options: { sort: { createdAt: -1 } },
+      })
       .populate('following', 'username fullname dp')
       .populate('followers', 'username fullname dp')
       .select('-hash -salt');

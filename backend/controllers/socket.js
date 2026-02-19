@@ -7,6 +7,11 @@ function socketController(io) {
   io.on('connection', (socket) => {
     console.log('✅ User connected:', socket.id);
 
+    // Per-socket error handler (e.g. malformed packets)
+    socket.on('error', (err) => {
+      console.error(`[Socket] Error on socket ${socket.id}:`, err.message);
+    });
+
     // Register user as online
     socket.on('register', (userId) => {
       onlineUsers.set(userId, socket.id);

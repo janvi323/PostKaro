@@ -87,7 +87,9 @@ export default function FindPeople() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Find People</h1>
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">
+        Find <span className="text-primaryPink">People</span>
+      </h1>
 
       {/* Search */}
       <div className="relative mb-6">

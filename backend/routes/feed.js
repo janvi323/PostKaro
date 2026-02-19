@@ -59,6 +59,7 @@ router.get('/dashboard', authenticateJWT, async (req, res) => {
   try {
     const posts = await Post.find({ user: req.user._id })
       .populate('user', 'username fullname dp')
+      .populate('comments.user', 'username fullname dp')
       .sort({ createdAt: -1 });
 
     res.json({ success: true, posts });

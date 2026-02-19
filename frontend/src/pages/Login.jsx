@@ -26,21 +26,21 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-mainBg bg-pattern">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-mainBg to-softIvory/40 bg-pattern">
       <div className="w-full max-w-md animate-fade-in">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-strongPink to-softPink rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-glow-pink animate-float">
+          <div className="w-16 h-16 bg-gradient-to-br from-primaryPink to-secondaryPink rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-glow-pink animate-float">
             <span className="text-white text-3xl font-bold">P</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-700">
-            Post<span className="text-strongPink">Karo</span>
+          <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
+            Post<span className="text-primaryPink">Karo</span>
           </h1>
           <p className="text-gray-400 mt-2 text-sm">Share your world, beautifully.</p>
         </div>
 
-        <div className="glass rounded-3xl p-8">
-          <h2 className="text-xl font-bold text-gray-700 mb-6 text-center">Welcome back</h2>
+        <div className="glass-modal rounded-3xl p-8 border border-softIvory/30 shadow-card-hover">
+          <h2 className="text-xl font-bold text-gray-700 mb-6 text-center">Welcome back 👋</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -64,20 +64,20 @@ export default function Login() {
               />
             </div>
             <div className="flex justify-end">
-              <Link to="/forgot-password" className="text-xs text-strongPink font-medium hover:underline">
+              <Link to="/forgot-password" className="text-xs text-primaryPink font-medium hover:underline">
                 Forgot Password?
               </Link>
             </div>
             <button type="submit" disabled={loading} className="w-full btn-primary disabled:opacity-50">
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Signing in…' : 'Sign In'}
             </button>
           </form>
 
           {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-pink-100" />
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-softIvory/60" />
             <span className="text-xs text-gray-400 font-medium">OR</span>
-            <div className="flex-1 h-px bg-pink-100" />
+            <div className="flex-1 h-px bg-softIvory/60" />
           </div>
 
           {/* Google OAuth */}
@@ -98,7 +98,7 @@ export default function Login() {
 
           <p className="text-center text-sm text-gray-400 mt-6">
             Don't have an account?{' '}
-            <Link to="/register" className="text-strongPink font-semibold hover:underline">
+            <Link to="/register" className="text-primaryPink font-semibold hover:underline">
               Sign Up
             </Link>
           </p>

@@ -7,10 +7,141 @@ const { authenticateJWT } = require('../middleware/auth');
 
 const router = express.Router();
 
-const toPublicUrl = (p) => '/' + p.replace(/^.*?public[\\/]/, '').replace(/\\/g, '/');
+// Convert an absolute disk path returned by Multer into a server-relative URL.
+//
+// Multer gives us the full OS path, e.g.:
+//   Windows: D:\MyProjects\pinterest\backend\public\images\uploads\uuid.jpg
+//   Linux:   /opt/render/project/src/backend/public/images/uploads/uuid.jpg
+//
+// We want: /images/uploads/uuid.jpg
+//
+// Strategy: normalise backslashes → forward slashes, then extract the portion
+// starting at the LAST occurrence of "/public/" so we don't get confused by
+// directory names that also contain the word "public" (e.g. "public_html").
+const toPublicUrl = (p) => {
+  const normalized = p.replace(/\\/g, '/');   // Windows → POSIX separators
+  const marker = '/public/';
+  const idx = normalized.lastIndexOf(marker);
+  if (idx !== -1) {
+    // slice from the '/' that starts '/images/...'
+    return normalized.slice(idx + marker.length - 1);
+  }
+  // Fallback: return the last 3 path segments (should never be needed)
+  const parts = normalized.split('/').filter(Boolean);
+  return '/' + parts.slice(-3).join('/');
+};
 const getClientInfo = (req) => ({
   ipAddress: req.ip || req.connection?.remoteAddress || 'unknown',
   userAgent: req.get('User-Agent') || 'unknown',
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /api/posts — list all posts (public; no auth required)
+//
+// This is the primary route used by the Feed page on page refresh.
+// It does NOT require authentication so pages always load correctly even
+// when the auth token hasn't been hydrated yet on the client.
+//
+// Query params:
+//   page  (number) – page number, default 1
+//   limit (number) – items per page, default 20
+// ═══════════════════════════════════════════════════════════════════════════════
+router.get('/', async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const skip = (page - 1) * limit;
+
+    const [posts, totalPosts] = await Promise.all([
+      Post.find()
+        .populate('user', 'username fullname dp')
+        .populate('comments.user', 'username fullname dp')
+        .sort({ createdAt: -1 }) // newest first
+        .skip(skip)
+        .limit(limit)
+        .lean(), // lean() gives plain JS objects — faster & smaller memory footprint
+      Post.countDocuments(),
+    ]);
+
+    const hasMore = skip + posts.length < totalPosts;
+
+    return res.json({
+      success: true,
+      posts,
+      hasMore,
+      currentPage: page,
+      totalPosts,
+    });
+  } catch (err) {
+    console.error('[GET /api/posts] Error loading posts:', err);
+    return res.status(500).json({ success: false, message: 'Error loading posts' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/posts/from-url — create a post from an external media URL
+//
+// Used when the user picks a photo/video from the Pexels modal.
+// No file upload; we store the external URL directly.
+// The PostCard resolveUrl() helper already handles absolute URLs.
+//
+// Body:
+//   fileUrl   (string, required) – the external media URL (e.g. Pexels CDN)
+//   fileType  (string, required) – "image" | "video"
+//   caption   (string, optional)
+//   source    (string, optional) – e.g. "pexels"
+// ═══════════════════════════════════════════════════════════════════════════════
+router.post('/from-url', authenticateJWT, async (req, res) => {
+  try {
+    const { fileUrl, fileType, caption, source } = req.body;
+
+    if (!fileUrl || typeof fileUrl !== 'string' || !fileUrl.startsWith('http')) {
+      return res.status(400).json({ success: false, message: 'A valid absolute fileUrl is required' });
+    }
+    if (!['image', 'video'].includes(fileType)) {
+      return res.status(400).json({ success: false, message: 'fileType must be "image" or "video"' });
+    }
+
+    const { ipAddress, userAgent } = getClientInfo(req);
+
+    const post = new Post({
+      fileUrl,
+      fileType,
+      caption: (caption || '').trim(),
+      user: req.user._id,
+      metadata: {
+        originalFileName: source || 'external',
+        uploadedFrom: Activity.getDeviceType(userAgent),
+      },
+    });
+
+    await post.save();
+    await User.findByIdAndUpdate(req.user._id, { $push: { posts: post._id } });
+
+    await Activity.create({
+      actor: req.user._id,
+      action: 'create_post',
+      target: post._id,
+      targetModel: 'Post',
+      details: {
+        postCaption: post.caption,
+        postType: fileType,
+        source: source || 'external_url',
+        ipAddress,
+      },
+      context: { userAgent, deviceType: Activity.getDeviceType(userAgent) },
+    });
+
+    const populatedPost = await Post.findById(post._id)
+      .populate('user', 'username fullname dp');
+
+    console.log(`[POST /from-url] Post created by ${req.user.username} — ${fileType} from ${source || 'url'}`);
+
+    return res.status(201).json({ success: true, message: 'Post created', post: populatedPost });
+  } catch (err) {
+    console.error('[POST /from-url] Error:', err);
+    return res.status(500).json({ success: false, message: 'Error creating post from URL' });
+  }
 });
 
 // Like

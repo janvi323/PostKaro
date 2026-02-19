@@ -31,24 +31,24 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-mainBg bg-pattern">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-mainBg to-softIvory/40 bg-pattern">
       <div className="w-full max-w-md animate-fade-in">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-strongPink to-softPink rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-glow-pink animate-float">
+          <div className="w-16 h-16 bg-gradient-to-br from-primaryPink to-secondaryPink rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-glow-pink animate-float">
             <span className="text-white text-3xl font-bold">P</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-700">
-            Post<span className="text-strongPink">Karo</span>
+          <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
+            Post<span className="text-primaryPink">Karo</span>
           </h1>
         </div>
 
-        <div className="glass rounded-3xl p-8">
+        <div className="glass-modal rounded-3xl p-8 border border-softIvory/30 shadow-card-hover">
           {!success ? (
             <>
               <div className="text-center mb-6">
-                <div className="w-14 h-14 bg-gradient-to-br from-softPink/30 to-strongPink/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-7 h-7 text-strongPink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-14 h-14 bg-gradient-to-br from-softIvory/50 to-primaryPink/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-7 h-7 text-primaryPink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
@@ -128,12 +128,12 @@ export default function ResetPassword() {
               <p className="text-gray-400 text-sm mb-4">
                 Your password has been changed successfully. Redirecting to login...
               </p>
-              <div className="w-6 h-6 border-3 border-softPink border-t-strongPink rounded-full animate-spin mx-auto" />
+              <div className="w-6 h-6 border-3 border-softIvory border-t-primaryPink rounded-full animate-spin mx-auto" />
             </div>
           )}
 
           <p className="text-center text-sm text-gray-400 mt-6">
-            <Link to="/login" className="text-strongPink font-semibold hover:underline">
+            <Link to="/login" className="text-primaryPink font-semibold hover:underline">
               Back to Sign In
             </Link>
           </p>
