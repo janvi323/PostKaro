@@ -4,6 +4,8 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const passport = require('passport');
@@ -67,6 +69,33 @@ socketController(io);
 
 // ==================== MIDDLEWARE ====================
 
+// Security headers — must come before everything else
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow images/videos to load on the frontend
+    contentSecurityPolicy: process.env.NODE_ENV === 'production', // only enforce CSP in production
+  })
+);
+
+// Rate limiters
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests, please try again later.' },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // max 20 login/register attempts per 15 min per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many auth attempts, please try again in 15 minutes.' },
+});
+
+app.use(globalLimiter);
+
 // CORS — must come before routes
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // handle pre-flight for all routes
@@ -104,8 +133,10 @@ app.use(
     saveUninitialized: false,
     secret: process.env.SESSION_SECRET || 'postkaro_secret',
     store: MongoStore.create({
-      mongoUrl: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/pinterest',
+      mongoUrl: process.env.MONGO_URI || process.env.MONGODB_URI,
       collectionName: 'sessions',
+      ttl: 60 * 60 * 24, // 1 day in seconds — matches cookie maxAge
+      autoRemove: 'native', // use MongoDB TTL index to clean up expired sessions
     }),
     cookie: { maxAge: 1000 * 60 * 60 * 24 },
   })
@@ -117,6 +148,8 @@ app.use(passport.session());
 // ==================== API ROUTES ====================
 
 const authRoutes = require('./routes/auth');
+// Apply strict rate limit to auth endpoints
+app.use('/api/auth', authLimiter);
 const feedRoutes = require('./routes/feed');
 const postRoutes = require('./routes/posts');
 const profileRoutes = require('./routes/profile');

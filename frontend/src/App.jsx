@@ -21,6 +21,7 @@ const Settings = lazy(() => import('./pages/Settings'));
 const FindPeople = lazy(() => import('./pages/FindPeople'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const PostDetail = lazy(() => import('./pages/PostDetail'));
 
 function PageLoader() {
   return (
@@ -69,6 +70,7 @@ export default function App() {
             <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/find-people" element={<ProtectedRoute><FindPeople /></ProtectedRoute>} />
+            <Route path="/post/:id" element={<ProtectedRoute><PostDetail /></ProtectedRoute>} />
 
             {/* Catch-all */}            <Route path="/" element={<Navigate to={isAuthenticated ? '/feed' : '/login'} />} />
             <Route path="*" element={<Navigate to="/" />} />

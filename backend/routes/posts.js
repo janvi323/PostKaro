@@ -363,14 +363,37 @@ router.put('/:id', authenticateJWT, async (req, res) => {
   }
 });
 
-// Get single post
-router.get('/:id', authenticateJWT, async (req, res) => {
+// Get single post (public — no auth required)
+router.get('/:id', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
       .populate('user', 'username fullname dp')
-      .populate('comments.user', 'username fullname dp');
+      .populate('comments.user', 'username fullname dp')
+      .lean();
     if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
-    res.json({ success: true, post });
+
+    // Fetch related posts: same user first, then fill with recent others — exclude current post
+    const [byUser, recent] = await Promise.all([
+      Post.find({ _id: { $ne: post._id }, user: post.user._id })
+        .sort({ createdAt: -1 })
+        .limit(6)
+        .populate('user', 'username fullname dp')
+        .lean(),
+      Post.find({ _id: { $ne: post._id }, user: { $ne: post.user._id } })
+        .sort({ createdAt: -1 })
+        .limit(12)
+        .populate('user', 'username fullname dp')
+        .lean(),
+    ]);
+
+    // Merge: user's own posts first, then pad with recent posts up to 18 total
+    const seen = new Set(byUser.map((p) => String(p._id)));
+    const related = [
+      ...byUser,
+      ...recent.filter((p) => !seen.has(String(p._id))),
+    ].slice(0, 18);
+
+    res.json({ success: true, post, related });
   } catch (err) {
     console.error('Get post error:', err);
     res.status(500).json({ success: false, message: 'Server error' });

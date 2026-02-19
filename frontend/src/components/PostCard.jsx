@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { HiHeart, HiChat, HiBookmark, HiShare, HiDotsVertical, HiTrash, HiPlay, HiX } from 'react-icons/hi';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { postService, feedService } from '../services';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -121,6 +121,7 @@ function PostMedia({ post, mediaUrl, onBrokenImage }) {
 
 export default function PostCard({ post, onDelete, onBrokenImage }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [liked, setLiked] = useState(post.likes?.some((l) => l.user === user?._id || l.user?._id === user?._id));
   const [likesCount, setLikesCount] = useState(post.likes?.length || 0);
   const [showComments, setShowComments] = useState(false);
@@ -211,13 +212,16 @@ export default function PostCard({ post, onDelete, onBrokenImage }) {
   return (
     <div className="masonry-item">
       <div className="card overflow-hidden group cursor-pointer">
-        {/* Media */}
-        <div className="relative overflow-hidden rounded-t-2xl">
+        {/* Media — click opens detail page */}
+        <div
+          className="relative overflow-hidden rounded-t-2xl cursor-pointer"
+          onClick={() => navigate(`/post/${post._id}`)}
+        >
           <PostMedia post={post} mediaUrl={mediaUrl} onBrokenImage={onBrokenImage} />
 
           {/* Save button — top right circle */}
           <button
-            onClick={handleSave}
+            onClick={(e) => { e.stopPropagation(); handleSave(); }}
             className={`absolute top-3 right-3 w-8 h-8 rounded-full shadow-md flex items-center justify-center
                         transition-all duration-300 opacity-0 group-hover:opacity-100 active:scale-95
                         ${saved
@@ -231,12 +235,12 @@ export default function PostCard({ post, onDelete, onBrokenImage }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent
                           opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out
                           flex items-end justify-between p-3 pointer-events-none group-hover:pointer-events-auto">
-            <button onClick={handleLike}
+            <button onClick={(e) => { e.stopPropagation(); handleLike(); }}
               className="flex items-center gap-1.5 text-white drop-shadow transition-transform hover:scale-110 active:scale-95">
               <HiHeart className={`w-6 h-6 drop-shadow-lg transition-colors ${liked ? 'text-secondaryPink fill-current' : ''}`} />
               <span className="text-sm font-bold drop-shadow-lg">{likesCount}</span>
             </button>
-            <button onClick={() => setShowComments(!showComments)}
+            <button onClick={(e) => { e.stopPropagation(); setShowComments(!showComments); }}
               className="flex items-center gap-1.5 text-white drop-shadow transition-transform hover:scale-110">
               <HiChat className="w-6 h-6 drop-shadow-lg" />
               <span className="text-sm font-bold drop-shadow-lg">{comments.length}</span>
