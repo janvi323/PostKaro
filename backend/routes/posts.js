@@ -191,7 +191,10 @@ router.post('/:id/comment', authenticateJWT, async (req, res) => {
     const comment = post.addComment(req.user._id, text.trim(), ipAddress, userAgent);
     await post.save();
     await post.populate('comments.user', 'username fullname dp');
-    await Activity.logComment(req.user._id, post._id, text.trim(), comment._id, userAgent, ipAddress);
+    
+    // Log activity non-blocking to prevent comment failures due to activity logging issues
+    Activity.logComment(req.user._id, post._id, text.trim(), comment._id, userAgent, ipAddress)
+      .catch((err) => console.error('[Activity.logComment] Error logging comment:', err));
 
     const savedComment = post.comments.id(comment._id);
     res.json({
