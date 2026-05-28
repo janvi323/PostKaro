@@ -84,7 +84,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Static files
+// Static files - serve BEFORE fallback handlers so real files are found first
 app.use('/uploads', express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 app.use('/audios', express.static(path.join(__dirname, 'public/audios')));
@@ -99,8 +99,17 @@ app.use('/images/uploads', (req, res) => {
   </svg>`);
 });
 
-// Fallback: serve default-avatar.svg when a profile-picture file is missing
-app.use('/images/dp', (req, res) => {
+// Fallback: serve default-avatar.svg when a profile-picture file is missing (only if file doesn't exist)
+app.use('/images/dp', (req, res, next) => {
+  const fs = require('fs');
+  const filePath = path.join(__dirname, 'public/images/dp', path.basename(req.path));
+  
+  // If the requested file exists, let the static handler serve it (via next)
+  if (fs.existsSync(filePath)) {
+    return next();
+  }
+  
+  // Otherwise, serve the default avatar
   res.sendFile(path.join(__dirname, 'public/images/dp/default-avatar.svg'));
 });
 

@@ -24,6 +24,14 @@ const UNSPLASH_BASE_URL = 'https://api.unsplash.com';
  */
 router.get('/photos', async (req, res) => {
   try {
+    // Check if API key is configured
+    if (!process.env.UNSPLASH_ACCESS_KEY) {
+      return res.status(503).json({
+        success: false,
+        message: 'Unsplash integration is not configured. Please add UNSPLASH_ACCESS_KEY to environment variables.',
+      });
+    }
+
     const page = parseInt(req.query.page, 10) || 1;
     const query = req.query.query || '';
     // Allow caller to request up to 30 photos per page (Unsplash max is 30)

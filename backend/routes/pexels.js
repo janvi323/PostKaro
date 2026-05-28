@@ -26,7 +26,7 @@ const PEXELS_VIDEO_BASE = 'https://api.pexels.com/videos';
 function pexelsHeaders() {
   const key = process.env.PEXELS_API_KEY;
   if (!key) {
-    throw new Error('PEXELS_API_KEY is not configured in environment variables');
+    return null; // Will be handled by routes
   }
   return { Authorization: key };
 }
@@ -54,11 +54,18 @@ function paginationMeta(data, perPage) {
  */
 router.get('/photos', async (req, res) => {
   try {
+    // Check if API key is configured
+    const headers = pexelsHeaders();
+    if (!headers) {
+      return res.status(503).json({
+        success: false,
+        message: 'Pexels integration is not configured. Please add PEXELS_API_KEY to environment variables.',
+      });
+    }
+
     const query = (req.query.query || '').trim();
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const perPage = Math.min(80, Math.max(1, parseInt(req.query.per_page, 10) || 20));
-
-    const headers = pexelsHeaders();
 
     let photos = [];
     let meta = {};
@@ -150,11 +157,18 @@ router.get('/photos', async (req, res) => {
  */
 router.get('/videos', async (req, res) => {
   try {
+    // Check if API key is configured
+    const headers = pexelsHeaders();
+    if (!headers) {
+      return res.status(503).json({
+        success: false,
+        message: 'Pexels integration is not configured. Please add PEXELS_API_KEY to environment variables.',
+      });
+    }
+
     const query = (req.query.query || '').trim();
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const perPage = Math.min(80, Math.max(1, parseInt(req.query.per_page, 10) || 15));
-
-    const headers = pexelsHeaders();
 
     // Choose the best quality video file available from the Pexels response
     const pickVideoFile = (files) => {
@@ -200,14 +214,6 @@ router.get('/videos', async (req, res) => {
 
     return res.json({ success: true, videos, meta, query: query || null });
   } catch (err) {
-    if (err.message.includes('PEXELS_API_KEY')) {
-      console.error('[Pexels] Missing API key');
-      return res.status(503).json({
-        success: false,
-        message: 'Pexels service is not configured. Add PEXELS_API_KEY to server environment.',
-      });
-    }
-
     const status = err.response?.status || 500;
     console.error('[Pexels] Videos error:', err.response?.data || err.message);
     return res.status(status).json({
