@@ -67,3 +67,4 @@ coverage/
 *.seed
 *.pid.lock
 
+DEPLOYMENT_GUIDE.md

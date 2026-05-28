@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+const maskMongoURI = (uri) => uri.replace(/(mongodb(?:\+srv)?:\/\/[^:]+:)[^@]+@/, '$1***@');
+
 // Resolve URI: prefer MONGO_URI (Atlas) over legacy MONGODB_URI (local fallback)
 const getMongoURI = () => {
   const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
@@ -14,7 +16,7 @@ const connectDB = async () => {
   const uri = getMongoURI();
 
   // Mask credentials in log output for security
-  const safeUri = uri.replace(/:([^@]+)@/, ':***@');
+  const safeUri = maskMongoURI(uri);
 
   try {
     const conn = await mongoose.connect(uri, {

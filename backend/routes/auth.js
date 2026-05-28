@@ -83,12 +83,12 @@ router.get('/google', passport.authenticate('google', { scope: ['profile', 'emai
 // Google OAuth callback
 router.get(
   '/google/callback',
-  passport.authenticate('google', { failureRedirect: `${process.env.CLIENT_URL}/login?error=google_auth_failed` }),
+  passport.authenticate('google', { failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_auth_failed` }),
   (req, res) => {
     const token = generateToken(req.user);
     Activity.logLogin(req.user._id, req.get('User-Agent'), req.ip).catch(console.error);
     // Redirect to frontend with token
-    res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}`);
+    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
   }
 );
 

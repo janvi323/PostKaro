@@ -21,41 +21,19 @@ connectDB();
 require('./config/passport')(passport);
 
 // ==================== CORS ORIGINS ====================
-// Support comma-separated origins for multi-environment deployments.
-// e.g. CLIENT_URL="https://postkaro.vercel.app,https://www.postkaro.vercel.app"
-// Falls back to localhost:5173 for local development.
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
-  .split(',')
-  .map((o) => o.trim())
-  .filter(Boolean);
-
 const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, curl, SSR)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    console.warn(`[CORS] Blocked origin: ${origin}`);
-    callback(new Error(`Origin ${origin} not allowed by CORS`));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: process.env.FRONTEND_URL,
+  credentials: true
 };
 
 // App
 const app = express();
 const server = http.createServer(app);
 
-// Socket.IO with CORS — use a function so behaviour matches the Express cors
-// middleware: allow no-origin requests (Postman, SSR), block unknown origins.
+// Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-      console.warn(`[Socket.IO CORS] Blocked origin: ${origin}`);
-      callback(new Error(`Origin ${origin} not allowed`));
-    },
-    methods: ['GET', 'POST'],
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   },
   // Generous timeouts reduce spurious disconnects during slow handshakes in dev
@@ -126,6 +104,11 @@ app.use('/images/dp', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/images/dp/default-avatar.svg'));
 });
 
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.set("trust proxy", 1);
+
 // Session (needed for Passport Google OAuth flow)
 app.use(
   expressSession({
@@ -135,15 +118,16 @@ app.use(
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI || process.env.MONGODB_URI,
       collectionName: 'sessions',
-      ttl: 60 * 60 * 24, // 1 day in seconds — matches cookie maxAge
-      autoRemove: 'native', // use MongoDB TTL index to clean up expired sessions
+      ttl: 60 * 60 * 24,
+      autoRemove: 'native',
     }),
-    cookie: { maxAge: 1000 * 60 * 60 * 24 },
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    },
   })
 );
-
-app.use(passport.initialize());
-app.use(passport.session());
 
 // ==================== API ROUTES ====================
 
@@ -202,7 +186,7 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 PostKaro API running on http://localhost:${PORT}`);
   console.log(`📡 Socket.IO ready`);
-  console.log(`🌐 CORS allowed origins: ${allowedOrigins.join(', ')}`);
+  console.log(`🌐 CORS origin: ${process.env.FRONTEND_URL}`);
   console.log(`🛠️  Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
