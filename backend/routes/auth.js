@@ -133,7 +133,16 @@ router.post('/forgot-password', async (req, res) => {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
 
-    await sendResetEmail(user.email, resetUrl, user.username || user.fullname);
+    try {
+      await sendResetEmail(user.email, resetUrl, user.username || user.fullname);
+    } catch (emailErr) {
+      console.error('Email send error:', emailErr.message);
+      // Don't fail the request - just log the error and inform user
+      return res.status(503).json({
+        success: false,
+        message: 'Email service temporarily unavailable. Please try again later or contact support.',
+      });
+    }
 
     res.json({ success: true, message: 'If an account with that email exists, a reset link has been sent.' });
   } catch (err) {

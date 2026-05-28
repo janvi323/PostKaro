@@ -1,20 +1,28 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE || 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // Use TLS (not SSL)
+  requireTLS: true,
+  family: 4, // Force IPv4 (Render doesn't support IPv6 well)
+  connectionTimeout: 10000, // 10 seconds
+  socketTimeout: 10000, // 10 seconds
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
 
-// Verify connection on startup
+// Verify connection on startup (non-blocking)
 transporter.verify((error) => {
   if (error) {
     console.warn('⚠️  Email service not configured:', error.message);
   } else {
     console.log('📧 Email service ready');
   }
+}).catch((err) => {
+  console.warn('⚠️  Email verification error (non-blocking):', err.message);
 });
 
 /**
