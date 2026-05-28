@@ -104,12 +104,9 @@ app.use('/images/dp', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/images/dp/default-avatar.svg'));
 });
 
-app.use(passport.initialize());
-app.use(passport.session());
-
 app.set("trust proxy", 1);
 
-// Session (needed for Passport Google OAuth flow)
+// Session (needed for Passport Google OAuth flow) - MUST come BEFORE passport middleware
 app.use(
   expressSession({
     resave: false,
@@ -128,6 +125,9 @@ app.use(
     },
   })
 );
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 // ==================== API ROUTES ====================
 

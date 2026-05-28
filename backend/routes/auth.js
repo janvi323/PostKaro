@@ -30,7 +30,9 @@ router.post('/register', async (req, res) => {
 
     const token = generateToken(user);
 
-    await Activity.logLogin(user._id, req.get('User-Agent'), req.ip);
+    Activity.logLogin(user._id, req.get('User-Agent'), req.ip).catch(err => {
+      console.error('Activity log error (non-blocking):', err);
+    });
 
     res.status(201).json({
       success: true,
@@ -128,8 +130,8 @@ router.post('/forgot-password', async (req, res) => {
     await user.save();
 
     // Build reset URL pointing to the React frontend
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-    const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
 
     await sendResetEmail(user.email, resetUrl, user.username || user.fullname);
 
