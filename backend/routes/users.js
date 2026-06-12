@@ -1,18 +1,19 @@
 const express = require('express');
 const User = require('../models/users');
 const { authenticateJWT } = require('../middleware/auth');
+const { cleanSearchQuery, regexForSearch } = require('../utils/request');
 
 const router = express.Router();
 
 // GET /api/users/search?query=
 router.get('/search', authenticateJWT, async (req, res) => {
   try {
-    const query = req.query.query;
+    const query = cleanSearchQuery(req.query.query);
     if (!query || !query.trim()) {
       return res.json({ success: true, users: [] });
     }
 
-    const regex = { $regex: query.trim(), $options: 'i' };
+    const regex = regexForSearch(query);
 
     const users = await User.find({
       $and: [

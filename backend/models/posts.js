@@ -5,7 +5,7 @@ const postSchema = new Schema(
   {
     fileUrl: { type: String, required: true },
     fileType: { type: String, enum: ['image', 'video'], required: true },
-    caption: { type: String },
+    caption: { type: String, trim: true, maxlength: 2200 },
     voiceUrl: { type: String },
 
     likes: [
@@ -19,7 +19,7 @@ const postSchema = new Schema(
 
     comments: [
       {
-        text: { type: String },
+        text: { type: String, trim: true, maxlength: 1000 },
         user: { type: Schema.Types.ObjectId, ref: 'User' },
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date },
@@ -96,6 +96,8 @@ const postSchema = new Schema(
 );
 
 postSchema.index({ user: 1, createdAt: -1 });
+postSchema.index({ createdAt: -1 });
+postSchema.index({ visibility: 1, createdAt: -1 });
 postSchema.index({ 'likes.user': 1 });
 postSchema.index({ 'comments.user': 1 });
 postSchema.index({ 'views.user': 1, 'views.viewedAt': -1 });

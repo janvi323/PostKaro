@@ -7,14 +7,21 @@ const { generateToken } = require('../middleware/auth');
 const { sendResetEmail } = require('../config/email');
 
 const router = express.Router();
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
 // Register
 router.post('/register', async (req, res) => {
   try {
-    const { username, email, fullname, password } = req.body;
+    const username = (req.body.username || '').trim();
+    const email = (req.body.email || '').trim().toLowerCase();
+    const fullname = (req.body.fullname || '').trim();
+    const { password } = req.body;
 
     if (!username || !email || !fullname || !password) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
     }
 
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
@@ -125,7 +132,7 @@ router.post('/forgot-password', async (req, res) => {
 
     // Generate a secure random token
     const resetToken = crypto.randomBytes(32).toString('hex');
-    user.resetPasswordToken = resetToken;
+    user.resetPasswordToken = hashToken(resetToken);
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
@@ -159,12 +166,12 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Token and new password are required' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
     }
 
     const user = await User.findOne({
-      resetPasswordToken: token,
+      resetPasswordToken: hashToken(token),
       resetPasswordExpires: { $gt: Date.now() }
     });
 

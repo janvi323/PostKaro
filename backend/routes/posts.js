@@ -4,6 +4,7 @@ const Post = require('../models/posts');
 const Activity = require('../models/Activity');
 const upload = require('../middleware/multer');
 const { authenticateJWT } = require('../middleware/auth');
+const { parsePagination, requireObjectId } = require('../utils/request');
 
 const router = express.Router();
 
@@ -48,9 +49,7 @@ const getClientInfo = (req) => ({
 // ═══════════════════════════════════════════════════════════════════════════════
 router.get('/', async (req, res) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 20));
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 20, maxLimit: 50 });
 
     const [posts, totalPosts] = await Promise.all([
       Post.find()
@@ -95,7 +94,13 @@ router.post('/from-url', authenticateJWT, async (req, res) => {
   try {
     const { fileUrl, fileType, caption, source } = req.body;
 
-    if (!fileUrl || typeof fileUrl !== 'string' || !fileUrl.startsWith('http')) {
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(fileUrl);
+    } catch {
+      parsedUrl = null;
+    }
+    if (!parsedUrl || !['http:', 'https:'].includes(parsedUrl.protocol)) {
       return res.status(400).json({ success: false, message: 'A valid absolute fileUrl is required' });
     }
     if (!['image', 'video'].includes(fileType)) {
@@ -107,7 +112,7 @@ router.post('/from-url', authenticateJWT, async (req, res) => {
     const post = new Post({
       fileUrl,
       fileType,
-      caption: (caption || '').trim(),
+      caption: (caption || '').trim().slice(0, 2200),
       user: req.user._id,
       metadata: {
         originalFileName: source || 'external',
@@ -147,6 +152,7 @@ router.post('/from-url', authenticateJWT, async (req, res) => {
 // Like
 router.post('/:id/like', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.id, 'post id')) return;
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
 
@@ -166,6 +172,7 @@ router.post('/:id/like', authenticateJWT, async (req, res) => {
 // Unlike
 router.post('/:id/unlike', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.id, 'post id')) return;
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
 
@@ -181,19 +188,21 @@ router.post('/:id/unlike', authenticateJWT, async (req, res) => {
 // Comment
 router.post('/:id/comment', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.id, 'post id')) return;
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
 
     const { text } = req.body;
     if (!text?.trim()) return res.status(400).json({ success: false, message: 'Comment text required' });
+    const commentText = text.trim().slice(0, 1000);
 
     const { ipAddress, userAgent } = getClientInfo(req);
-    const comment = post.addComment(req.user._id, text.trim(), ipAddress, userAgent);
+    const comment = post.addComment(req.user._id, commentText, ipAddress, userAgent);
     await post.save();
     await post.populate('comments.user', 'username fullname dp');
     
     // Log activity non-blocking to prevent comment failures due to activity logging issues
-    Activity.logComment(req.user._id, post._id, text.trim(), comment._id, userAgent, ipAddress)
+    Activity.logComment(req.user._id, post._id, commentText, comment._id, userAgent, ipAddress)
       .catch((err) => console.error('[Activity.logComment] Error logging comment:', err));
 
     const savedComment = post.comments.id(comment._id);
@@ -211,6 +220,8 @@ router.post('/:id/comment', authenticateJWT, async (req, res) => {
 // Delete comment
 router.delete('/:postId/comment/:commentId', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.postId, 'post id')) return;
+    if (!requireObjectId(res, req.params.commentId, 'comment id')) return;
     const post = await Post.findById(req.params.postId);
     if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
 
@@ -233,6 +244,7 @@ router.delete('/:postId/comment/:commentId', authenticateJWT, async (req, res) =
 // Track view
 router.post('/:id/view', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.id, 'post id')) return;
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
 
@@ -249,6 +261,7 @@ router.post('/:id/view', authenticateJWT, async (req, res) => {
 // Share
 router.post('/:id/share', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.id, 'post id')) return;
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
 
@@ -265,6 +278,7 @@ router.post('/:id/share', authenticateJWT, async (req, res) => {
 // Analytics
 router.get('/:id/analytics', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.id, 'post id')) return;
     const post = await Post.findById(req.params.id).populate('user', 'username');
     if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
     if (!post.user._id.equals(req.user._id)) return res.status(403).json({ success: false, message: 'Unauthorized' });
@@ -289,7 +303,7 @@ router.post(
       const media = req.files?.file?.[0];
       if (!media) return res.status(400).json({ success: false, message: 'Main media is required' });
 
-      const caption = (req.body.caption || '').trim();
+      const caption = (req.body.caption || '').trim().slice(0, 2200);
 
       const mime = (media.mimetype || '').toLowerCase();
       let fileType;
@@ -337,6 +351,7 @@ router.post(
 // Delete post
 router.delete('/:id', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.id, 'post id')) return;
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
     if (!post.user.equals(req.user._id)) return res.status(403).json({ success: false, message: 'Unauthorized' });
@@ -353,11 +368,12 @@ router.delete('/:id', authenticateJWT, async (req, res) => {
 // Edit caption
 router.put('/:id', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.id, 'post id')) return;
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
     if (!post.user.equals(req.user._id)) return res.status(403).json({ success: false, message: 'Unauthorized' });
 
-    post.caption = req.body.caption;
+    post.caption = (req.body.caption || '').trim().slice(0, 2200);
     await post.save();
     res.json({ success: true, message: 'Post updated', post });
   } catch (err) {
@@ -369,6 +385,7 @@ router.put('/:id', authenticateJWT, async (req, res) => {
 // Get single post (public — no auth required)
 router.get('/:id', async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.id, 'post id')) return;
     const post = await Post.findById(req.params.id)
       .populate('user', 'username fullname dp')
       .populate('comments.user', 'username fullname dp')

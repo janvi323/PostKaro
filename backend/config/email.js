@@ -3,32 +3,35 @@ const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
-  secure: false, // Use TLS (not SSL)
+  secure: false,
   requireTLS: true,
-  family: 4, // Force IPv4 (Render doesn't support IPv6 well)
-  connectionTimeout: 10000, // 10 seconds
-  socketTimeout: 10000, // 10 seconds
+  family: 4,
+  connectionTimeout: 10000,
+  socketTimeout: 10000,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
 
-// Verify connection on startup (non-blocking)
-transporter.verify((error) => {
-  if (error) {
-    console.warn('⚠️  Email service not configured:', error.message);
-  } else {
-    console.log('📧 Email service ready');
-  }
-}).catch((err) => {
-  console.warn('⚠️  Email verification error (non-blocking):', err.message);
-});
+if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+  transporter.verify((error) => {
+    if (error) {
+      console.warn('Email service not configured:', error.message);
+    } else {
+      console.log('Email service ready');
+    }
+  });
+} else {
+  console.warn('Email service disabled: EMAIL_USER or EMAIL_PASS is missing');
+}
 
-/**
- * Send a password reset email with a styled HTML template
- */
 const sendResetEmail = async (to, resetUrl, username) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    throw new Error('Email service is not configured');
+  }
+
+  const safeName = String(username || 'there').replace(/[<>]/g, '');
   const mailOptions = {
     from: `"PostKaro" <${process.env.EMAIL_USER}>`,
     to,
@@ -45,21 +48,16 @@ const sendResetEmail = async (to, resetUrl, username) => {
           <tr>
             <td align="center">
               <table width="480" cellpadding="0" cellspacing="0" style="background:white;border-radius:24px;overflow:hidden;box-shadow:0 8px 32px rgba(255,118,164,0.12);">
-                <!-- Header -->
                 <tr>
                   <td style="background:linear-gradient(135deg,#FF76A4,#F6AFC6);padding:32px;text-align:center;">
-                    <div style="width:48px;height:48px;background:white;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;">
-                      <span style="color:#FF76A4;font-size:24px;font-weight:bold;">P</span>
-                    </div>
                     <h1 style="color:white;margin:0;font-size:22px;font-weight:700;">PostKaro</h1>
                   </td>
                 </tr>
-                <!-- Body -->
                 <tr>
                   <td style="padding:32px;">
                     <h2 style="color:#333;margin:0 0 8px;font-size:20px;">Password Reset</h2>
                     <p style="color:#666;font-size:14px;line-height:1.6;margin:0 0 24px;">
-                      Hi <strong>${username}</strong>, we received a request to reset your password.
+                      Hi <strong>${safeName}</strong>, we received a request to reset your password.
                       Click the button below to create a new one. This link expires in <strong>1 hour</strong>.
                     </p>
                     <table width="100%" cellpadding="0" cellspacing="0">
@@ -72,20 +70,13 @@ const sendResetEmail = async (to, resetUrl, username) => {
                       </tr>
                     </table>
                     <p style="color:#999;font-size:12px;line-height:1.5;margin:24px 0 0;text-align:center;">
-                      If you didn't request this, you can safely ignore this email.<br>
-                      Your password won't change until you create a new one.
+                      If you did not request this, you can safely ignore this email.
                     </p>
                     <hr style="border:none;border-top:1px solid #f0e0e8;margin:24px 0;">
                     <p style="color:#bbb;font-size:11px;text-align:center;margin:0;">
-                      Can't click the button? Copy this link:<br>
+                      Cannot click the button? Copy this link:<br>
                       <a href="${resetUrl}" style="color:#FF76A4;word-break:break-all;">${resetUrl}</a>
                     </p>
-                  </td>
-                </tr>
-                <!-- Footer -->
-                <tr>
-                  <td style="background:#fdf2f7;padding:16px 32px;text-align:center;">
-                    <p style="color:#ccc;font-size:11px;margin:0;">&copy; ${new Date().getFullYear()} PostKaro. All rights reserved.</p>
                   </td>
                 </tr>
               </table>

@@ -16,8 +16,14 @@ module.exports = function (passport) {
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
+          const email = profile.emails?.[0]?.value?.toLowerCase();
+          const emailVerified = profile.emails?.[0]?.verified !== false;
+          if (!email || !emailVerified) {
+            return done(null, false, { message: 'Google account email is not verified' });
+          }
+
           // Check if user already exists with this email
-          let user = await User.findOne({ email: profile.emails[0].value });
+          let user = await User.findOne({ email });
 
           if (user) {
             // User exists — update google info if needed
@@ -31,8 +37,8 @@ module.exports = function (passport) {
           // Create new user from Google profile
           user = new User({
             googleId: profile.id,
-            username: profile.emails[0].value.split('@')[0] + '_' + Date.now().toString(36),
-            email: profile.emails[0].value,
+            username: email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').slice(0, 20) + '_' + Date.now().toString(36),
+            email,
             fullname: profile.displayName,
             dp: profile.photos?.[0]?.value || '/images/default-avatar.svg',
           });

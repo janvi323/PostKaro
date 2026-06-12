@@ -3,6 +3,7 @@ const User = require('../models/users');
 const Post = require('../models/posts');
 const { authenticateJWT, optionalAuth } = require('../middleware/auth');
 const upload = require('../middleware/multer');
+const { requireObjectId } = require('../utils/request');
 
 const router = express.Router();
 
@@ -40,6 +41,7 @@ router.get('/me', authenticateJWT, async (req, res) => {
 // Get profile by ID
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.id, 'userId')) return;
     const user = await User.findById(req.params.id)
       .populate({
         path: 'posts',
@@ -79,7 +81,12 @@ router.get('/:id', optionalAuth, async (req, res) => {
       canViewPosts = !user.isPrivate;
     }
 
-    res.json({ success: true, user, followStatus, canMessage, canViewPosts, isOwnProfile });
+    const payload = user.toObject();
+    if (!canViewPosts) {
+      payload.posts = [];
+    }
+
+    res.json({ success: true, user: payload, followStatus, canMessage, canViewPosts, isOwnProfile });
   } catch (err) {
     console.error('Profile error:', err);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -92,8 +99,8 @@ router.put('/settings', authenticateJWT, async (req, res) => {
     const { isPrivate, bio, website } = req.body;
     const updates = {};
     if (typeof isPrivate === 'boolean') updates.isPrivate = isPrivate;
-    if (bio !== undefined) updates.bio = bio;
-    if (website !== undefined) updates.website = website;
+    if (bio !== undefined) updates.bio = String(bio).trim().slice(0, 160);
+    if (website !== undefined) updates.website = String(website).trim().slice(0, 200);
 
     const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true }).select('-hash -salt');
     res.json({ success: true, message: 'Settings updated', user });

@@ -7,6 +7,7 @@ const router = express.Router();
 
 // Unsplash API base URL
 const UNSPLASH_BASE_URL = 'https://api.unsplash.com';
+const UNSPLASH_TIMEOUT_MS = 8000;
 
 /**
  * GET /api/unsplash/photos
@@ -33,7 +34,7 @@ router.get('/photos', async (req, res) => {
     }
 
     const page = parseInt(req.query.page, 10) || 1;
-    const query = req.query.query || '';
+    const query = (req.query.query || '').trim().slice(0, 80);
     // Allow caller to request up to 30 photos per page (Unsplash max is 30)
     const perPage = Math.min(30, Math.max(1, parseInt(req.query.per_page, 10) || 20));
 
@@ -49,6 +50,7 @@ router.get('/photos', async (req, res) => {
       const { data } = await axios.get(`${UNSPLASH_BASE_URL}/search/photos`, {
         headers,
         params: { page, per_page: perPage, query },
+        timeout: UNSPLASH_TIMEOUT_MS,
       });
       photos = data.results;
       return res.json({
@@ -62,6 +64,7 @@ router.get('/photos', async (req, res) => {
       const { data } = await axios.get(`${UNSPLASH_BASE_URL}/photos`, {
         headers,
         params: { page, per_page: perPage, order_by: 'popular' },
+        timeout: UNSPLASH_TIMEOUT_MS,
       });
       photos = data;
       // Unsplash curated list is virtually infinite; signal more as long as we got a full page
@@ -176,7 +179,7 @@ router.post('/:id/comment', authenticateJWT, async (req, res) => {
     if (!text?.trim()) return res.status(400).json({ success: false, message: 'Comment text required' });
 
     const doc = await findOrCreate(req.params.id, req.body);
-    const comment = { user: req.user._id, text: text.trim() };
+    const comment = { user: req.user._id, text: text.trim().slice(0, 1000) };
     doc.comments.push(comment);
     await doc.save();
     await doc.populate('comments.user', 'username fullname dp');

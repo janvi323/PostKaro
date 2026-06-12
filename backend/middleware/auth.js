@@ -1,12 +1,30 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/users');
 
+const getJwtSecret = () => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+  return process.env.JWT_SECRET;
+};
+
+const jwtOptions = () => ({
+  expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  issuer: process.env.JWT_ISSUER || 'postkaro-api',
+  audience: process.env.JWT_AUDIENCE || 'postkaro-web',
+});
+
+const jwtVerifyOptions = () => ({
+  issuer: process.env.JWT_ISSUER || 'postkaro-api',
+  audience: process.env.JWT_AUDIENCE || 'postkaro-web',
+});
+
 // Generate JWT token
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user._id, username: user.username, email: user.email },
-    process.env.JWT_SECRET,
-    { expiresIn: '7d' }
+    { id: user._id, username: user.username, email: user.email, role: user.role || 'user' },
+    getJwtSecret(),
+    jwtOptions()
   );
 };
 
@@ -20,7 +38,7 @@ const authenticateJWT = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret(), jwtVerifyOptions());
 
     const user = await User.findById(decoded.id).select('-hash -salt');
     if (!user) {
@@ -43,7 +61,7 @@ const optionalAuth = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, getJwtSecret(), jwtVerifyOptions());
       req.user = await User.findById(decoded.id).select('-hash -salt');
     }
   } catch {

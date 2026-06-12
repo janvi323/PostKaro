@@ -3,15 +3,14 @@ const User = require('../models/users');
 const Post = require('../models/posts');
 const Message = require('../models/Message');
 const { authenticateJWT } = require('../middleware/auth');
+const { cleanSearchQuery, parsePagination, regexForSearch, requireObjectId } = require('../utils/request');
 
 const router = express.Router();
 
 // Home / Feed — get recent posts
 router.get('/feed', authenticateJWT, async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 24;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 24, maxLimit: 50 });
 
     const posts = await Post.find()
       .populate('user', 'username fullname dp')
@@ -33,9 +32,7 @@ router.get('/feed', authenticateJWT, async (req, res) => {
 // Explore
 router.get('/explore', authenticateJWT, async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 24;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 24, maxLimit: 50 });
 
     const posts = await Post.find()
       .populate('user', 'username fullname dp')
@@ -72,16 +69,17 @@ router.get('/dashboard', authenticateJWT, async (req, res) => {
 // Search users
 router.get('/search-users', authenticateJWT, async (req, res) => {
   try {
-    const query = req.query.q;
+    const query = cleanSearchQuery(req.query.q);
     if (!query) return res.json({ success: true, users: [] });
+    const regex = regexForSearch(query);
 
     const users = await User.find({
       $and: [
         { _id: { $ne: req.user._id } },
         {
           $or: [
-            { username: { $regex: query, $options: 'i' } },
-            { fullname: { $regex: query, $options: 'i' } },
+            { username: regex },
+            { fullname: regex },
           ],
         },
       ],
@@ -129,6 +127,7 @@ router.get('/notification-counts', authenticateJWT, async (req, res) => {
 // Save / Unsave post
 router.post('/post/:id/save', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.id, 'post id')) return;
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 

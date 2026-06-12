@@ -21,6 +21,7 @@ const router = express.Router();
 
 const PEXELS_BASE = 'https://api.pexels.com/v1';
 const PEXELS_VIDEO_BASE = 'https://api.pexels.com/videos';
+const PEXELS_TIMEOUT_MS = 8000;
 
 // ── Helper: build Pexels request headers ──────────────────────────────────────
 function pexelsHeaders() {
@@ -63,7 +64,7 @@ router.get('/photos', async (req, res) => {
       });
     }
 
-    const query = (req.query.query || '').trim();
+    const query = (req.query.query || '').trim().slice(0, 80);
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const perPage = Math.min(80, Math.max(1, parseInt(req.query.per_page, 10) || 20));
 
@@ -75,6 +76,7 @@ router.get('/photos', async (req, res) => {
       const { data } = await axios.get(`${PEXELS_BASE}/search`, {
         headers,
         params: { query, page, per_page: perPage },
+        timeout: PEXELS_TIMEOUT_MS,
       });
 
       // Normalise to a clean, safe shape (no full Pexels response object forwarded)
@@ -102,6 +104,7 @@ router.get('/photos', async (req, res) => {
       const { data } = await axios.get(`${PEXELS_BASE}/curated`, {
         headers,
         params: { page, per_page: perPage },
+        timeout: PEXELS_TIMEOUT_MS,
       });
 
       photos = data.photos.map((p) => ({
@@ -166,7 +169,7 @@ router.get('/videos', async (req, res) => {
       });
     }
 
-    const query = (req.query.query || '').trim();
+    const query = (req.query.query || '').trim().slice(0, 80);
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const perPage = Math.min(80, Math.max(1, parseInt(req.query.per_page, 10) || 15));
 
@@ -197,6 +200,7 @@ router.get('/videos', async (req, res) => {
       const { data } = await axios.get(`${PEXELS_VIDEO_BASE}/search`, {
         headers,
         params: { query, page, per_page: perPage },
+        timeout: PEXELS_TIMEOUT_MS,
       });
 
       videos = data.videos.map(normaliseVideo);
@@ -206,6 +210,7 @@ router.get('/videos', async (req, res) => {
       const { data } = await axios.get(`${PEXELS_VIDEO_BASE}/popular`, {
         headers,
         params: { page, per_page: perPage },
+        timeout: PEXELS_TIMEOUT_MS,
       });
 
       videos = data.videos.map(normaliseVideo);

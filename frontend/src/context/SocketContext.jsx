@@ -21,7 +21,8 @@ export function SocketProvider({ children }) {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    if (user) {
+    const token = localStorage.getItem('token');
+    if (user && token) {
       const newSocket = io(SOCKET_URL, {
         /**
          * Start with WebSocket directly — Vite proxy has ws:true so the
@@ -38,6 +39,8 @@ export function SocketProvider({ children }) {
          * Polling is listed as a fallback for environments that block WS.
          */
         transports: ['websocket', 'polling'],
+        auth: { token },
+        extraHeaders: { Authorization: `Bearer ${token}` },
         withCredentials: true,
         reconnection: true,
         reconnectionAttempts: 5,

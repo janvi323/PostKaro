@@ -3,15 +3,15 @@ const User = require('../models/users');
 const Post = require('../models/posts');
 const Activity = require('../models/Activity');
 const { authenticateJWT } = require('../middleware/auth');
+const requireAdmin = require('../middleware/admin');
+const { parsePagination } = require('../utils/request');
 
 const router = express.Router();
 
 // Admin dashboard stats
-router.get('/dashboard', authenticateJWT, async (req, res) => {
+router.get('/dashboard', authenticateJWT, requireAdmin, async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 50;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 50, maxLimit: 100 });
 
     const activities = await Activity.find()
       .populate('actor', 'username fullname dp')
@@ -55,9 +55,9 @@ router.get('/dashboard', authenticateJWT, async (req, res) => {
 });
 
 // Recent activities API
-router.get('/activities/recent', authenticateJWT, async (req, res) => {
+router.get('/activities/recent', authenticateJWT, requireAdmin, async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 10));
     const since = req.query.since ? new Date(req.query.since) : new Date(Date.now() - 60000);
 
     const activities = await Activity.find({ timestamp: { $gte: since } })

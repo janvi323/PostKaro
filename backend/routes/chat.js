@@ -2,12 +2,14 @@ const express = require('express');
 const Message = require('../models/Message');
 const User = require('../models/users');
 const { authenticateJWT } = require('../middleware/auth');
+const { parsePagination, requireObjectId } = require('../utils/request');
 
 const router = express.Router();
 
 // Get chat messages between current user and another user
 router.get('/:userId', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.userId, 'userId')) return;
     const otherUser = await User.findById(req.params.userId).select('username fullname dp email isPrivate');
     if (!otherUser) return res.status(404).json({ success: false, message: 'User not found' });
 
@@ -31,17 +33,20 @@ router.get('/:userId', authenticateJWT, async (req, res) => {
       { seen: true }
     );
 
+    const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 50, maxLimit: 100 });
     const messages = await Message.find({
       $or: [
         { sender: req.user._id, receiver: otherUser._id },
         { sender: otherUser._id, receiver: req.user._id },
       ],
     })
-      .sort({ createdAt: 1 })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate('sender', 'username fullname dp')
       .populate('receiver', 'username fullname dp');
 
-    res.json({ success: true, otherUser, messages });
+    res.json({ success: true, otherUser, messages: messages.reverse(), currentPage: page });
   } catch (err) {
     console.error('Chat error:', err);
     res.status(500).json({ success: false, message: 'Error loading chat' });
@@ -51,6 +56,7 @@ router.get('/:userId', authenticateJWT, async (req, res) => {
 // Send message
 router.post('/:userId/send', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.userId, 'userId')) return;
     const receiverUser = await User.findById(req.params.userId).select('isPrivate');
     if (!receiverUser) return res.status(404).json({ success: false, message: 'User not found' });
 
@@ -62,10 +68,13 @@ router.post('/:userId/send', authenticateJWT, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Cannot send message to this user' });
     }
 
+    const text = typeof req.body.text === 'string' ? req.body.text.trim() : '';
+    if (!text) return res.status(400).json({ success: false, message: 'Message text is required' });
+
     const newMessage = new Message({
       sender: req.user._id,
       receiver: receiverUser._id,
-      text: req.body.text,
+      text,
     });
     await newMessage.save();
 
@@ -83,6 +92,7 @@ router.post('/:userId/send', authenticateJWT, async (req, res) => {
 // Delete entire chat
 router.delete('/:userId', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.userId, 'userId')) return;
     await Message.deleteMany({
       $or: [
         { sender: req.user._id, receiver: req.params.userId },

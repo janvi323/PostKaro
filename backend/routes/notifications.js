@@ -1,6 +1,7 @@
 const express = require('express');
 const User = require('../models/users');
 const { authenticateJWT } = require('../middleware/auth');
+const { requireObjectId } = require('../utils/request');
 
 const router = express.Router();
 
@@ -25,6 +26,7 @@ router.get('/', authenticateJWT, async (req, res) => {
 // Accept follow request
 router.post('/accept-request/:userId', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.userId, 'userId')) return;
     await User.findByIdAndUpdate(req.user._id, {
       $addToSet: { followers: req.params.userId },
       $pull: { followRequests: req.params.userId },
@@ -43,6 +45,7 @@ router.post('/accept-request/:userId', authenticateJWT, async (req, res) => {
 // Decline follow request
 router.post('/decline-request/:userId', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.userId, 'userId')) return;
     await User.findByIdAndUpdate(req.user._id, { $pull: { followRequests: req.params.userId } });
     await User.findByIdAndUpdate(req.params.userId, { $pull: { sentRequests: req.user._id } });
     res.json({ success: true, message: 'Follow request declined' });

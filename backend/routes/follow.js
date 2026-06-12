@@ -2,6 +2,7 @@ const express = require('express');
 const User = require('../models/users');
 const Activity = require('../models/Activity');
 const { authenticateJWT } = require('../middleware/auth');
+const { cleanSearchQuery, regexForSearch, requireObjectId } = require('../utils/request');
 
 const router = express.Router();
 
@@ -15,6 +16,7 @@ router.post('/follow/:userId', authenticateJWT, async (req, res) => {
   try {
     const currentUser = req.user;
     const targetUserId = req.params.userId;
+    if (!requireObjectId(res, targetUserId, 'userId')) return;
     const { ipAddress, userAgent } = getClientInfo(req);
 
     if (currentUser._id.toString() === targetUserId) {
@@ -59,6 +61,7 @@ router.post('/follow/:userId', authenticateJWT, async (req, res) => {
 // Unfollow
 router.post('/unfollow/:userId', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.userId, 'userId')) return;
     await User.findByIdAndUpdate(req.user._id, {
       $pull: { following: req.params.userId, sentRequests: req.params.userId },
     });
@@ -75,6 +78,7 @@ router.post('/unfollow/:userId', authenticateJWT, async (req, res) => {
 // Accept request
 router.post('/accept-request/:userId', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.userId, 'userId')) return;
     const currentUser = await User.findById(req.user._id);
     if (!currentUser.followRequests.includes(req.params.userId)) {
       return res.status(400).json({ success: false, message: 'No pending request from this user' });
@@ -98,6 +102,7 @@ router.post('/accept-request/:userId', authenticateJWT, async (req, res) => {
 // Decline request
 router.post('/decline-request/:userId', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.userId, 'userId')) return;
     await User.findByIdAndUpdate(req.user._id, { $pull: { followRequests: req.params.userId } });
     await User.findByIdAndUpdate(req.params.userId, { $pull: { sentRequests: req.user._id } });
     res.json({ success: true, message: 'Follow request declined', status: 'not_following' });
@@ -110,6 +115,7 @@ router.post('/decline-request/:userId', authenticateJWT, async (req, res) => {
 // Follow status
 router.get('/status/:userId', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.userId, 'userId')) return;
     const currentUser = await User.findById(req.user._id);
     if (currentUser._id.toString() === req.params.userId) return res.json({ status: 'self' });
 
@@ -126,6 +132,7 @@ router.get('/status/:userId', authenticateJWT, async (req, res) => {
 // Get followers
 router.get('/followers/:userId', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.userId, 'userId')) return;
     const user = await User.findById(req.params.userId).populate('followers', 'username fullname dp').lean();
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     res.json({ success: true, followers: user.followers, count: user.followers.length });
@@ -138,6 +145,7 @@ router.get('/followers/:userId', authenticateJWT, async (req, res) => {
 // Get following
 router.get('/following/:userId', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.userId, 'userId')) return;
     const user = await User.findById(req.params.userId).populate('following', 'username fullname dp').lean();
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     res.json({ success: true, following: user.following, count: user.following.length });
@@ -161,6 +169,7 @@ router.get('/requests', authenticateJWT, async (req, res) => {
 // Can message
 router.get('/can-message/:userId', authenticateJWT, async (req, res) => {
   try {
+    if (!requireObjectId(res, req.params.userId, 'userId')) return;
     const currentUser = await User.findById(req.user._id);
     const targetUser = await User.findById(req.params.userId).select('isPrivate');
     if (!targetUser) return res.status(404).json({ success: false, message: 'User not found' });
@@ -176,13 +185,14 @@ router.get('/can-message/:userId', authenticateJWT, async (req, res) => {
 // Search users
 router.get('/search', authenticateJWT, async (req, res) => {
   try {
-    const { q } = req.query;
+    const q = cleanSearchQuery(req.query.q);
     if (!q || q.length < 2) return res.json({ success: true, users: [] });
+    const regex = regexForSearch(q);
 
     const users = await User.find({
       $and: [
         { _id: { $ne: req.user._id } },
-        { $or: [{ username: { $regex: q, $options: 'i' } }, { fullname: { $regex: q, $options: 'i' } }] },
+        { $or: [{ username: regex }, { fullname: regex }] },
       ],
     })
       .select('username fullname dp followers following')

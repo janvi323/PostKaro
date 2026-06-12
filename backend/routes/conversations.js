@@ -2,6 +2,7 @@ const express = require('express');
 const Message = require('../models/Message');
 const User = require('../models/users');
 const { authenticateJWT } = require('../middleware/auth');
+const { cleanSearchQuery, regexForSearch } = require('../utils/request');
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.get('/', authenticateJWT, async (req, res) => {
       $or: [{ sender: req.user._id }, { receiver: req.user._id }],
     })
       .sort({ createdAt: -1 })
+      .limit(200)
       .populate('sender', 'username fullname dp email isPrivate')
       .populate('receiver', 'username fullname dp email isPrivate');
 
@@ -66,8 +68,9 @@ router.get('/', authenticateJWT, async (req, res) => {
 // Search users for new conversations
 router.get('/search-users', authenticateJWT, async (req, res) => {
   try {
-    const query = req.query.q;
+    const query = cleanSearchQuery(req.query.q);
     if (!query) return res.json({ success: true, users: [] });
+    const regex = regexForSearch(query);
 
     const currentUser = await User.findById(req.user._id);
     const users = await User.find({
@@ -81,8 +84,8 @@ router.get('/search-users', authenticateJWT, async (req, res) => {
         },
         {
           $or: [
-            { username: { $regex: query, $options: 'i' } },
-            { fullname: { $regex: query, $options: 'i' } },
+            { username: regex },
+            { fullname: regex },
           ],
         },
       ],
