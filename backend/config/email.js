@@ -5,14 +5,12 @@ const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  requireTLS: true,
+  port: 465,
+  secure: true,
   family: 4,
-  connectionTimeout: 10000,
-  socketTimeout: 10000,
+  connectionTimeout: 15000,
+  socketTimeout: 15000,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -22,18 +20,18 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-
 if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
   transporter.verify((error) => {
     if (error) {
-      console.warn('Email service not configured:', error.message);
+      console.warn('⚠️  Email verify check failed (emails may still work):', error.message);
     } else {
-      console.log('Email service ready');
+      console.log('✅ Email service ready');
     }
   });
 } else {
-  console.warn('Email service disabled: EMAIL_USER or EMAIL_PASS is missing');
+  console.warn('⚠️  Email service disabled: EMAIL_USER or EMAIL_PASS is missing');
 }
+
 
 const sendResetEmail = async (to, resetUrl, username) => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
