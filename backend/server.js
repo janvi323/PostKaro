@@ -103,6 +103,12 @@ app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(cookieParser());
 
 app.use('/uploads', express.static(path.join(__dirname, 'public'), { maxAge: '7d' }));
+
+// Serve default-avatar.svg at the legacy path used by the User model default
+app.get('/images/default-avatar.svg', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/images/dp/default-avatar.svg'));
+});
+
 app.use('/images', express.static(path.join(__dirname, 'public/images'), { maxAge: '7d' }));
 app.use('/audios', express.static(path.join(__dirname, 'public/audios'), { maxAge: '7d' }));
 
