@@ -1,31 +1,38 @@
 /**
- * services/api.js
+ * services/api.js — Axios instance used by all service modules.
  *
- * Axios instance used by all service modules.
+ * Base URL resolution (priority order):
  *
- * Base URL resolution (in priority order):
- *  1. VITE_API_URL env variable  — set this in your .env for production builds
- *     e.g.  VITE_API_URL=https://postkaro-backend.onrender.com/api
- *  2. Vite dev proxy fallback ( /api )  — proxied to http://localhost:5000 by
- *     vite.config.js in development. DO NOT change this fallback to a
- *     hardcoded localhost URL or the production build will break.
+ *  1. VITE_API_URL env var (set in Vercel dashboard for production):
+ *       https://postkaro-main.onrender.com/api
  *
- * Why this pattern?
- *  - In development:  requests go to /api  →  Vite proxy  →  localhost:5000
- *  - In production:   VITE_API_URL is set to the Render backend URL
- *  - API key is NEVER in frontend code
+ *  2. Relative /api fallback (development via Vite proxy):
+ *       vite.config.js proxies /api → http://localhost:5000
+ *
+ * IMPORTANT — why we do NOT hardcode localhost here:
+ *   VITE_ variables are injected at BUILD TIME. If localhost:5000 is
+ *   in the .env file that Vercel reads during build, every API call
+ *   in the deployed app will hit localhost (which doesn't exist in
+ *   Vercel's build environment), causing all requests to fail silently.
+ *
+ * Correct setup:
+ *   - Local .env:       VITE_API_URL=   (empty — Vite proxy takes over)
+ *   - Vercel dashboard: VITE_API_URL=https://postkaro-main.onrender.com/api
  */
 import axios from 'axios';
 
-// ── Base URL ──────────────────────────────────────────────────────────────────
-// Use the env var if provided (production), else fall back to /api (dev proxy).
+// If VITE_API_URL is empty string (dev), fall back to /api (proxied by Vite).
+// If VITE_API_URL is set (prod), use the full Render URL.
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
-  // withCredentials lets the browser send session cookies (used by Passport/Google OAuth)
+  // withCredentials allows the browser to send session cookies.
+  // Required for Passport Google OAuth session continuity.
   withCredentials: true,
+  // 30-second timeout — prevents hanging requests on Render cold starts
+  timeout: 30000,
 });
 
 // ── Request interceptor: attach JWT token ─────────────────────────────────────
@@ -41,15 +48,16 @@ api.interceptors.request.use(
 );
 
 // ── Response interceptor: transparent 401 handling ───────────────────────────
-// Redirect to /login on 401 so the user is prompted to re-authenticate.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      // Only redirect if not already on the login page to avoid redirect loops
-      if (!window.location.pathname.startsWith('/login')) {
+      // Only redirect if not already on an auth page (prevents redirect loops)
+      const authPages = ['/login', '/register', '/forgot-password', '/auth/callback'];
+      const isAuthPage = authPages.some((p) => window.location.pathname.startsWith(p));
+      if (!isAuthPage) {
         window.location.href = '/login';
       }
     }

@@ -8,7 +8,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user from token on mount
+  // Restore session from token on mount
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -25,6 +25,7 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // Standard email/password login
   const login = useCallback(async (credentials) => {
     const res = await authService.login(credentials);
     const { token, user: userData } = res.data;
@@ -33,6 +34,24 @@ export function AuthProvider({ children }) {
     setUser(userData);
     toast.success(`Welcome back, ${userData.fullname}!`);
     return res.data;
+  }, []);
+
+  /**
+   * loginWithUserData — called by AuthCallback after Google OAuth.
+   *
+   * Why this exists separately from `login`:
+   * OAuth callback already has the token (from URL param) and then fetches
+   * the full user via getMe(). We need to set BOTH the token and the full
+   * user state atomically, so isAuthenticated flips to true immediately
+   * and the protected /feed route doesn't redirect back to /login.
+   *
+   * Using updateUser() (shallow merge) was broken because it requires
+   * an existing user state to merge into, which doesn't exist yet.
+   */
+  const loginWithUserData = useCallback((userData, token) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
   }, []);
 
   const register = useCallback(async (data) => {
@@ -57,7 +76,18 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        loginWithUserData,
+        register,
+        logout,
+        updateUser,
+        isAuthenticated: !!user,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

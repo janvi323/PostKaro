@@ -3,11 +3,21 @@
 # ============================
 
 # ---------- Environment / Secrets ----------
+# Block ALL .env files everywhere — never commit secrets
 .env
 .env.*
+.env.local
+.env.development
+.env.production
+.env.production.local
+.env.staging
 !.env.example
+!.env.production.example
 backend/.env
-frontend/.env
+backend/.env.*
+frontend/.env.*
+# Keep the safe committed default (no real values inside)
+# frontend/.env is committed but contains only empty placeholders
 
 # ---------- Dependencies ----------
 node_modules/
