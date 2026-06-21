@@ -70,6 +70,14 @@ export const chatService = {
   getChat: (userId) => api.get(`/chat/${userId}`),
   sendMessage: (userId, text) => api.post(`/chat/${userId}/send`, { text }),
   deleteChat: (userId) => api.delete(`/chat/${userId}`),
+
+  // Feature: "Delete for Me" — removes the message from the current user's view only.
+  // The REST endpoint adds req.user._id to the message's deletedFor array.
+  deleteMessageForMe: (messageId) => api.patch(`/chat/message/${messageId}/delete-for-me`),
+
+  // Feature: "Unsend / Delete for Everyone" — marks isDeleted=true in DB.
+  // Pair with socket.emit('deleteMessage', { messageId }) for real-time update.
+  unsendMessage: (messageId) => api.patch(`/chat/message/${messageId}/unsend`),
 };
 
 export const conversationService = {
